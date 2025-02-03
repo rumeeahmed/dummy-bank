@@ -1,5 +1,5 @@
-export VERSION := "1"
-#export VERSION := `git rev-parse --short HEAD`
+export GOOGLE_API_URL := "https://maps.dummy.com"
+export GOOGLE_API_KEY := "dummy_key"
 export DB_PORT := "5432"
 local_db_host := "127.0.0.1"
 local_db_user := "service"
