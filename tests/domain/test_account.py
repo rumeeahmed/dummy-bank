@@ -1,0 +1,192 @@
+from datetime import datetime, timezone
+from typing import Callable
+from uuid import UUID
+
+import pytest
+from pydantic import ValidationError
+
+from domain import Account
+
+
+class TestID:
+    def test_init_valid(self, make_account: Callable[..., Account]) -> None:
+        value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
+        account = make_account(id=value)
+        assert account.id == value
+
+    def test_is_read_only(self, make_account: Callable[..., Account]) -> None:
+        value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
+        account = make_account(id=value)
+
+        with pytest.raises(AttributeError):
+            account.id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+
+
+class TestCustomerID:
+    def test_init_valid(self, make_account: Callable[..., Account]) -> None:
+        value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
+        account = make_account(customer_id=value)
+        assert account.customer_id == value
+
+    def test_is_read_only(self, make_account: Callable[..., Account]) -> None:
+        value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
+        account = make_account(customer_id=value)
+
+        with pytest.raises(AttributeError):
+            account.customer_id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+
+
+class TestCreatedAt:
+    VALID_VALUES = [None, datetime(2024, 8, 15, 16, 0, tzinfo=timezone.utc)]
+
+    @pytest.mark.parametrize("value", VALID_VALUES)
+    def test_init_valid(
+        self, value: datetime | None, make_account: Callable[..., Account]
+    ) -> None:
+        customer = make_account(created_at=value)
+        assert customer.created_at == value
+
+    def test_is_settable_if_none(self, make_account: Callable[..., Account]) -> None:
+        customer = make_account(created_at=None)
+        customer.created_at = datetime(2024, 8, 15, 16, 0, tzinfo=timezone.utc)
+        assert customer.created_at == datetime(2024, 8, 15, 16, 0, tzinfo=timezone.utc)
+
+    def test_is_read_only_if_not_none(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = datetime(2024, 6, 26, 1, 2, 3, 4, tzinfo=timezone.utc)
+        customer = make_account(created_at=value)
+
+        with pytest.raises(AttributeError):
+            customer.created_at = datetime.now(timezone.utc)
+
+        assert customer.created_at == value
+
+
+class TestUpdatedAt:
+    VALID_VALUES = [None, datetime(2024, 8, 15, 16, 0, tzinfo=timezone.utc)]
+
+    @pytest.mark.parametrize("value", VALID_VALUES)
+    def test_init_valid(
+        self, value: datetime | None, make_account: Callable[..., Account]
+    ) -> None:
+        customer = make_account(updated_at=value)
+        assert customer.updated_at == value
+
+    @pytest.mark.parametrize("value", VALID_VALUES)
+    def test_set_valid(
+        self, value: datetime | None, make_account: Callable[..., Account]
+    ) -> None:
+        customer = make_account(updated_at=None)
+        customer.updated_at = value
+        assert customer.updated_at == value
+
+
+class TestAccountNumber:
+    def test_init_valid(self, make_account: Callable[..., Account]) -> None:
+        value = "1234567890"
+        account = make_account(account_number=value)
+        assert account.account_number == value
+
+    def test_is_read_only(self, make_account: Callable[..., Account]) -> None:
+        value = "1234567890"
+        account = make_account(account_number=value)
+
+        with pytest.raises(AttributeError):
+            account.account_number = "12334"  # type: ignore[misc]
+
+
+class TestAccountType:
+    def test_init_valid(self, make_account: Callable[..., Account]) -> None:
+        value = "credit"
+        account = make_account(account_type=value)
+        assert account.account_type == value
+
+    def test_is_read_only(self, make_account: Callable[..., Account]) -> None:
+        value = "credit"
+        account = make_account(account_type=value)
+
+        with pytest.raises(AttributeError):
+            account.account_type = "debit"  # type: ignore[misc]
+
+
+class TestBalance:
+    def test_init(self, make_account: Callable[..., Account]) -> None:
+        value = 100
+        expected = 10000
+        account = make_account(account_balance=value)
+        assert account.account_balance == expected
+
+    def test_init_float(self, make_account: Callable[..., Account]) -> None:
+        value = 9.99
+        expected = 999
+        account = make_account(account_balance=value)
+        assert account.account_balance == expected
+
+    def test_init_negative(self, make_account: Callable[..., Account]) -> None:
+        value = -9.99
+        with pytest.raises(ValidationError):
+            make_account(account_balance=value)
+
+    def test_is_read_only(self, make_account: Callable[..., Account]) -> None:
+        value = 100
+        account = make_account(account_balance=value)
+
+        with pytest.raises(AttributeError):
+            account.account_balance = 1  # type: ignore[misc]
+
+    def test_increase_account_balance(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 100
+        account = make_account(account_balance=value)
+        account.increase_balance(100)
+        assert account.account_balance == 20000
+
+    def test_increase_account_balance_float(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 9.97
+        account = make_account(account_balance=value)
+        account.increase_balance(5.67)
+        assert account.account_balance == 1564
+
+    def test_increase_account_balance_negative(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 9.97
+        account = make_account(account_balance=value)
+        with pytest.raises(ValidationError):
+            account.increase_balance(-5.67)
+
+    def test_decrease_account_balance(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 100
+        account = make_account(account_balance=value)
+        account.decrease_balance(50)
+        assert account.account_balance == 5000
+
+    def test_increase_decrease_balance_float(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 9.97
+        account = make_account(account_balance=value)
+        account.decrease_balance(5.67)
+        assert account.account_balance == 430
+
+    def test_increase_decrease_balance_negative(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 9.97
+        account = make_account(account_balance=value)
+        with pytest.raises(ValidationError):
+            account.decrease_balance(-5.67)
+
+    def test_increase_decrease_balance_with_no_balance(
+        self, make_account: Callable[..., Account]
+    ) -> None:
+        value = 0
+        account = make_account(account_balance=value)
+        with pytest.raises(ValueError):
+            account.decrease_balance(5.67)

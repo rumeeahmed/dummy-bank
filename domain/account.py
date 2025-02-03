@@ -1,0 +1,69 @@
+from datetime import datetime
+from uuid import UUID
+
+from pydantic import NonNegativeFloat, NonNegativeInt, validate_call
+
+
+class Account:
+    @validate_call
+    def __init__(
+        self,
+        *,
+        id: UUID,
+        created_at: datetime | None,
+        updated_at: datetime | None,
+        account_type: str,
+        account_number: str,
+        account_balance: NonNegativeFloat,
+        customer_id: UUID,
+    ) -> None:
+        self._id = id
+        self._created_at = created_at
+        self.updated_at = updated_at
+        self._account_type = account_type
+        self._account_number = account_number
+        self._account_balance = account_balance * 100
+        self._customer_id = customer_id
+
+    @property
+    def created_at(self) -> datetime | None:
+        return self._created_at
+
+    @created_at.setter
+    def created_at(self, value: datetime | None) -> None:
+        if self._created_at is not None:
+            raise AttributeError("created_at cannot be set if not None")
+
+        self._created_at = value
+
+    @property
+    def id(self) -> UUID:
+        return self._id
+
+    @property
+    def customer_id(self) -> UUID:
+        return self._customer_id
+
+    @property
+    def account_number(self) -> str:
+        return self._account_number
+
+    @property
+    def account_type(self) -> str:
+        return self._account_type
+
+    @property
+    def account_balance(self) -> NonNegativeInt:
+        return int(self._account_balance)
+
+    @validate_call
+    def increase_balance(self, amount: NonNegativeFloat) -> None:
+        self._account_balance += int(amount * 100)
+
+    @validate_call
+    def decrease_balance(self, amount: NonNegativeFloat) -> None:
+        cents = int(amount * 100)
+        if self._account_balance < cents:
+            raise ValueError("Insufficient funds for this transaction.")
+
+        self._account_balance -= cents
