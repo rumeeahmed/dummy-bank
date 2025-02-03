@@ -38,6 +38,7 @@ exclude = ["__pycache__", ".pytest_cache", ".ruff_cache", "scratch"]
 disallow_untyped_defs = true
 disable_error_code = "type-abstract"
 plugins = ["pydantic.mypy", "sqlalchemy.ext.mypy.plugin"]
+explicit_package_bases = true
 
 
 [tool.pytest.ini_options]

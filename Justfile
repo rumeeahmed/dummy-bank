@@ -27,7 +27,7 @@ lint:
     cd "{{ justfile_directory() }}" && \
       poetry run ruff format --check . && \
       poetry run ruff check . && \
-      poetry run mypy --explicit-package-bases .
+      poetry run mypy .
 
 pytest +args="":
     export DB_HOST="{{ local_db_host }}" && \
