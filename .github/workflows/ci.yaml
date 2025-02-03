@@ -17,6 +17,22 @@ jobs:
       run:
         shell: bash
     runs-on: ubuntu-latest
+    services:
+      database:
+        image: postgres
+        ports:
+          - 5432:5432
+        # needed because the postgres container does not provide a healthcheck
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        env:
+          POSTGRES_PASSWORD: service
+          POSTGRES_NAME: service
+          POSTGRES_USER: service
+          POSTGRES_PORT: 5432
     steps:
       - uses: actions/checkout@v4
         with:
