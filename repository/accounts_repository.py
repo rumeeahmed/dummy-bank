@@ -60,13 +60,19 @@ class AccountsRepository(Repository):
         return await self.load_account(search_condition=condition)
 
     async def load_paginated_accounts(
-        self, page: int, page_size: int
+        self, page: int, page_size: int, customer_id: UUID
     ) -> dict[str, Any]:
         offset = (page - 1) * page_size
-        count = await self.get_count(DBAccount)
+        count = await self.get_count(DBAccount, customer_id=customer_id)
         total_pages = (count + page_size - 1) // page_size
 
-        stmt = select(DBAccount).limit(page_size).offset(offset)
+        stmt = (
+            select(DBAccount)
+            .filter_by(customer_id=customer_id)
+            .limit(page_size)
+            .offset(offset)
+        )
+
         async with self._session() as session:
             results = (await session.scalars(stmt)).all()
 

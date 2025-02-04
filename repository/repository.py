@@ -1,4 +1,4 @@
-from typing import Literal, Type
+from typing import Any, Literal, Type
 
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
@@ -25,9 +25,14 @@ class Repository:
     def _session(self) -> AsyncSession:
         return async_sessionmaker(self.engine)()
 
-    async def get_count(self, model: Type[DeclarativeBase]) -> int:
+    async def get_count(self, model: Type[DeclarativeBase], **kwargs: Any) -> int:
         async with self._session() as session:
-            result = await session.execute(select(func.count()).select_from(model))
+            stmt = select(func.count()).select_from(model)
+
+            if kwargs:
+                stmt = stmt.filter_by(**kwargs)
+
+            result = await session.execute(stmt)
             total_count = result.scalar_one()
 
         return total_count

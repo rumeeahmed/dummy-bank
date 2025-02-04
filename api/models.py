@@ -3,7 +3,7 @@ from typing import Generic, TypeVar
 from uuid import UUID
 
 from fastapi import Query
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, NonNegativeFloat
 
 T = TypeVar("T")
 
@@ -49,3 +49,27 @@ class CustomerResponse(BaseModel):
     phone: str | None
     created_at: datetime | None
     updated_at: datetime | None
+
+
+class AccountsQueryParams(PaginationQueryParams):
+    customer_id: UUID
+
+
+class CreateAccount(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    account_type: str
+    account_number: str
+    initial_balance: NonNegativeFloat
+
+
+class AccountResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: UUID
+    customer_id: UUID
+    created_at: datetime
+    updated_at: datetime
+    account_balance: NonNegativeFloat
+    account_type: str
+    account_number: str

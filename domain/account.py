@@ -1,7 +1,10 @@
 from datetime import datetime
+from typing import Any, Self
 from uuid import UUID
 
 from pydantic import NonNegativeFloat, NonNegativeInt, validate_call
+
+# from repository.db_account import DBAccount
 
 
 class Account:
@@ -16,13 +19,14 @@ class Account:
         account_number: str,
         account_balance: NonNegativeFloat,
         customer_id: UUID,
+        is_new: bool = True,
     ) -> None:
         self._id = id
         self._created_at = created_at
         self.updated_at = updated_at
         self._account_type = account_type
         self._account_number = account_number
-        self._account_balance = account_balance * 100
+        self._account_balance = account_balance * 100 if is_new else account_balance
         self._customer_id = customer_id
 
     @property
@@ -67,3 +71,16 @@ class Account:
             raise ValueError("Insufficient funds for this transaction.")
 
         self._account_balance -= cents
+
+    @classmethod
+    def from_record(cls, record: Any) -> Self:
+        return cls(
+            id=record.id,
+            customer_id=record.customer_id,
+            created_at=record.created_at,
+            updated_at=record.updated_at,
+            account_type=record.account_type,
+            account_number=record.account_number,
+            account_balance=record.account_balance,
+            is_new=False,
+        )
