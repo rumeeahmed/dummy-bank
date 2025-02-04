@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine
 
 from api.dependencies import (
+    AccountRepositoryDep,
     CustomerRepositoryDep,
     DatabaseEngineDep,
     LoggerDep,
@@ -97,6 +98,27 @@ class TestGetCustomerRepository:
         @app.get("/test", status_code=204)
         def fn(customer_repository: CustomerRepositoryDep) -> None:
             assert customer_repository.engine == database_engine
+            return
+
+        with TestClient(app) as client:
+            response = client.get("/test")
+            assert response.status_code == 204
+
+
+class TestGetAccountRepository:
+    def test(self) -> None:
+        app = create_app(Settings(), Mock())
+
+        database_engine = Mock(spec=AsyncEngine)
+
+        def override_get_database_engine(request: Request) -> AsyncEngine:
+            return database_engine
+
+        app.dependency_overrides[get_database_engine] = override_get_database_engine
+
+        @app.get("/test", status_code=204)
+        def fn(account_repository: AccountRepositoryDep) -> None:
+            assert account_repository.engine == database_engine
             return
 
         with TestClient(app) as client:

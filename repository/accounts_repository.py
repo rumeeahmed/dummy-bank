@@ -4,40 +4,41 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from domain import Customer
+from domain import Account
 
-from .db_customer import DBCustomer
+from .db_account import DBAccount
 from .repository import Repository
 from .search_condition import SearchCondition
 
 
-class CustomerRepository(Repository):
-    async def save_customer(self, customer: Customer) -> None:
+class AccountsRepository(Repository):
+    async def save_account(self, account: Account) -> None:
         now = datetime.now(timezone.utc)
-        customer.updated_at = now
+        account.updated_at = now
 
         try:
-            customer.created_at = now
+            account.created_at = now
         except AttributeError:
             pass
 
-        record = DBCustomer(
-            id=customer.id,
-            created_at=customer.created_at,
-            updated_at=customer.updated_at,
-            first_name=customer.first_name,
-            middle_names=customer.middle_names,
-            last_name=customer.last_name,
-            email=customer.email,
-            phone=customer.phone,
+        record = DBAccount(
+            id=account.id,
+            customer_id=account.customer_id,
+            created_at=account.created_at,
+            updated_at=account.updated_at,
+            account_type=account.account_type,
+            account_number=account.account_number,
+            account_balance=account.account_balance,
         )
 
         async with self._session() as session:
             await session.merge(record)
             await session.commit()
 
-    async def load_customer(self, search_condition: SearchCondition) -> Customer | None:
-        stmt = select(DBCustomer).filter_by(**search_condition.as_filter_by_kwargs())
+    async def load_account(
+        self, search_condition: SearchCondition
+    ) -> list[Account] | None:
+        stmt = select(DBAccount).filter_by(**search_condition.as_filter_by_kwargs())
 
         async with self._session() as session:
             results = (await session.scalars(stmt)).all()
@@ -45,48 +46,32 @@ class CustomerRepository(Repository):
         if not results:
             return None
 
-        record = results[0]
+        return [Account.from_record(record) for record in results]
 
-        return Customer(
-            id=record.id,
-            created_at=record.created_at,
-            updated_at=record.updated_at,
-            first_name=record.first_name,
-            middle_names=record.middle_names,
-            last_name=record.last_name,
-            email=record.email,
-            phone=record.phone,
-        )
-
-    async def load_customer_with_id(self, id: UUID) -> Customer | None:
+    async def load_account_with_id(self, id: UUID) -> Account | None:
         condition = SearchCondition(id=id)
-        return await self.load_customer(search_condition=condition)
+        accounts = await self.load_account(search_condition=condition)
+        return accounts[0] if accounts else None
 
-    async def load_paginated_customers(
+    async def load_account_with_customer_id(
+        self, customer_id: UUID
+    ) -> list[Account] | None:
+        condition = SearchCondition(customer_id=customer_id)
+        return await self.load_account(search_condition=condition)
+
+    async def load_paginated_accounts(
         self, page: int, page_size: int
     ) -> dict[str, Any]:
         offset = (page - 1) * page_size
-        count = await self.get_count(DBCustomer)
+        count = await self.get_count(DBAccount)
         total_pages = (count + page_size - 1) // page_size
 
-        stmt = select(DBCustomer).limit(page_size).offset(offset)
+        stmt = select(DBAccount).limit(page_size).offset(offset)
         async with self._session() as session:
             results = (await session.scalars(stmt)).all()
 
         return {
-            "results": [
-                Customer(
-                    id=record.id,
-                    created_at=record.created_at,
-                    updated_at=record.updated_at,
-                    first_name=record.first_name,
-                    middle_names=record.middle_names,
-                    last_name=record.last_name,
-                    email=record.email,
-                    phone=record.phone,
-                )
-                for record in results
-            ],
+            "results": [Account.from_record(record) for record in results],
             "page": page,
             "page_size": page_size,
             "total_pages": total_pages,

@@ -14,7 +14,7 @@ from api.settings import Settings
 from domain import Account, Customer
 from lib.geolocation_client import GoogleMapsClient
 from lib.http_client import BaseHTTPClient
-from repository import Base, CustomerRepository
+from repository import AccountsRepository, Base, CustomerRepository
 
 postgresql_in_docker = factories.postgresql_noproc(
     port=5432, user="service", password="service", dbname="dummy_bank"
@@ -46,6 +46,11 @@ async def database_engine(postgresql: Connection) -> AsyncIterator[AsyncEngine]:
 @pytest.fixture
 async def customer_repository(database_engine: AsyncEngine) -> CustomerRepository:
     return CustomerRepository(engine=database_engine)
+
+
+@pytest.fixture
+async def account_repository(database_engine: AsyncEngine) -> AccountsRepository:
+    return AccountsRepository(engine=database_engine)
 
 
 @pytest.fixture

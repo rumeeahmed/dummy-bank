@@ -4,16 +4,15 @@ from fastapi import APIRouter, Depends, status
 
 from api import exceptions
 from api.dependencies import CustomerRepositoryDep
-from domain import Customer
-from repository import SearchCondition
-
-from .models import (
+from api.models import (
     CreateCustomer,
     CustomerResponse,
     PaginatedResponse,
     PaginationQueryParams,
     UpdateCustomer,
 )
+from domain import Customer
+from repository import SearchCondition
 
 router = APIRouter(tags=["customer"])
 

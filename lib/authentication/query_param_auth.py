@@ -23,5 +23,4 @@ class QueryParamAuth(Auth):
         yield request
 
     def _build_url(self, request: Request) -> URL:
-        print(request.url)
         return URL(f"{request.url}&{self._key}={self._token}")
