@@ -58,7 +58,6 @@ async def create_account(
     if not existing_customer:
         raise exceptions.NotFoundError("customer not found")
 
-    print(existing_customer.id)
     account = Account(
         id=uuid4(),
         customer_id=existing_customer.id,
