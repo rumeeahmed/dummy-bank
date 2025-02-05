@@ -69,6 +69,31 @@ class TestCreateAccount:
             assert response.status_code == 201
             assert response.json() == expected_payload
 
+    @pytest.mark.asyncio
+    async def test_missing_customer(
+        self,
+        account_repository: AccountsRepository,
+    ) -> None:
+        payload = {
+            "account_type": "debit",
+            "account_number": "1234567890",
+            "initial_balance": 100,
+            "customer_id": "23fd1b92-4463-4659-913b-49ef7e4d48b9",
+        }
+
+        def override_get_account_repository() -> AccountsRepository:
+            return account_repository
+
+        app = create_app(settings=Settings(), logger=Mock())
+        app.dependency_overrides[get_account_repository] = (
+            override_get_account_repository
+        )
+
+        with TestClient(app) as client:
+            response = client.post("/dummy-bank/v1/accounts", json=payload)
+            assert response.status_code == 404
+            assert response.json() == {"detail": "customer not found"}
+
     @pytest.mark.parametrize(
         argnames=["field", "value"],
         argvalues=[
@@ -111,28 +136,3 @@ class TestCreateAccount:
         with TestClient(app) as client:
             response = client.post("/dummy-bank/v1/accounts", json=payload)
             assert response.status_code == 422
-
-    @pytest.mark.asyncio
-    async def test_missing_customer(
-        self,
-        account_repository: AccountsRepository,
-    ) -> None:
-        payload = {
-            "account_type": "debit",
-            "account_number": "1234567890",
-            "initial_balance": 100,
-            "customer_id": "23fd1b92-4463-4659-913b-49ef7e4d48b9",
-        }
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/accounts", json=payload)
-            assert response.status_code == 404
-            assert response.json() == {"detail": "customer not found"}
