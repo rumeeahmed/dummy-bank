@@ -92,6 +92,9 @@ class TestCreateAccount:
         app.dependency_overrides[get_account_repository] = (
             override_get_account_repository
         )
+        app.dependency_overrides[get_customer_repository] = (
+            override_get_customer_repository
+        )
 
         with TestClient(app) as client:
             response = client.post("/dummy-bank/v1/accounts", json=payload)
