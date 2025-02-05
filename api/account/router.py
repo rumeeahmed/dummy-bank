@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 
@@ -9,8 +9,10 @@ from domain import Account
 from ..models import (
     AccountResponse,
     AccountsQueryParams,
+    BalanceUpdate,
     CreateAccount,
     PaginatedResponse,
+    TransferBalance,
 )
 
 router = APIRouter(tags=["accounts"])
@@ -69,3 +71,78 @@ async def create_account(
     )
     await account_repository.save_account(account)
     return AccountResponse.model_validate(account)
+
+
+@router.post(
+    "/dummy-bank/v1/accounts/{account_id}/deposit",
+    response_model=AccountResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Deposit money into Account",
+)
+async def deposit(
+    repository: AccountRepositoryDep,
+    account_id: UUID,
+    body: BalanceUpdate,
+) -> AccountResponse:
+    account = await repository.load_account_with_id(account_id)
+    if not account:
+        raise exceptions.NotFoundError("account not found")
+
+    account.increase_balance(body.amount)
+    await repository.save_account(account)
+    return AccountResponse.model_validate(account)
+
+
+@router.post(
+    "/dummy-bank/v1/accounts/{account_id}/withdraw",
+    response_model=AccountResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Withdraw money from Account",
+)
+async def withdraw(
+    repository: AccountRepositoryDep,
+    account_id: UUID,
+    body: BalanceUpdate,
+) -> AccountResponse:
+    account = await repository.load_account_with_id(account_id)
+    if not account:
+        raise exceptions.NotFoundError("account not found")
+
+    try:
+        account.decrease_balance(body.amount)
+        await repository.save_account(account)
+    except ValueError as e:
+        raise exceptions.InvalidRequestError(str(e))
+
+    return AccountResponse.model_validate(account)
+
+
+@router.post(
+    "/dummy-bank/v1/accounts/{account_id}/transfer",
+    response_model=list[AccountResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Transfer money from Account",
+)
+async def transfer(
+    repository: AccountRepositoryDep,
+    account_id: UUID,
+    body: TransferBalance,
+) -> list[AccountResponse]:
+    account = await repository.load_account_with_id(account_id)
+    account_2 = await repository.load_account_with_id(body.account_id)
+    if not account or not account_2:
+        raise exceptions.NotFoundError("account not found")
+
+    try:
+        account.decrease_balance(body.amount)
+        await repository.save_account(account)
+    except ValueError as e:
+        raise exceptions.InvalidRequestError(str(e))
+
+    account_2.increase_balance(body.amount)
+    await repository.save_account(account_2)
+
+    return [
+        AccountResponse.model_validate(account),
+        AccountResponse.model_validate(account_2),
+    ]

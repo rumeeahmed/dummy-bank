@@ -13,6 +13,7 @@ from api.account.router import router as account_router
 from api.customer.router import router as customer_router
 from api.exception_handlers import (
     handle_already_exists_error,
+    handle_invalid_request_error,
     handle_not_found_error,
 )
 from api.settings import Settings
@@ -48,6 +49,9 @@ def create_app(settings: Settings, logger: structlog.stdlib.BoundLogger) -> Fast
     app.add_exception_handler(exceptions.NotFoundError, handle_not_found_error)
     app.add_exception_handler(
         exceptions.AlreadyExistsError, handle_already_exists_error
+    )
+    app.add_exception_handler(
+        exceptions.InvalidRequestError, handle_invalid_request_error
     )
     app.include_router(account_router)
     app.include_router(customer_router)

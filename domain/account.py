@@ -68,7 +68,7 @@ class Account:
     def decrease_balance(self, amount: NonNegativeFloat) -> None:
         cents = int(amount * 100)
         if self._account_balance < cents:
-            raise ValueError("Insufficient funds for this transaction.")
+            raise ValueError("insufficient funds for this transaction")
 
         self._account_balance -= cents
 

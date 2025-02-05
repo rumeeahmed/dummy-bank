@@ -12,3 +12,11 @@ async def handle_already_exists_error(request: Request, exc: Exception) -> JSONR
     return JSONResponse(
         status_code=status.HTTP_409_CONFLICT, content={"detail": str(exc)}
     )
+
+
+async def handle_invalid_request_error(
+    request: Request, exc: Exception
+) -> JSONResponse:
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST, content={"detail": str(exc)}
+    )

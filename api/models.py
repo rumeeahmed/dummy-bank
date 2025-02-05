@@ -81,3 +81,11 @@ class AccountResponse(BaseModel):
     account_balance: NonNegativeInt
     account_type: str
     account_number: str
+
+
+class BalanceUpdate(BaseModel):
+    amount: NonNegativeFloat
+
+
+class TransferBalance(BalanceUpdate):
+    account_id: UUID
