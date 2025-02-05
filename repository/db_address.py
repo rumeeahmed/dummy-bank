@@ -17,6 +17,7 @@ class DBAccount(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     building_name: Mapped[str] = mapped_column(String, nullable=True)
     building_number: Mapped[str] = mapped_column(String, nullable=False)
+    street: Mapped[str] = mapped_column(String, nullable=False)
     town: Mapped[str] = mapped_column(String, nullable=False)
     postcode: Mapped[str] = mapped_column(String, nullable=False)
     county: Mapped[str] = mapped_column(String, nullable=True)

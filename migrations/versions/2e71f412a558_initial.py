@@ -54,6 +54,7 @@ def upgrade() -> None:
         sa.Column("customer_id", sa.Uuid(), nullable=False),
         sa.Column("building_name", sa.String(), nullable=False),
         sa.Column("building_number", sa.String(), nullable=False),
+        sa.Column("street", sa.String(), nullable=False),
         sa.Column("county", sa.String(), nullable=False),
         sa.Column("town", sa.String(), nullable=False),
         sa.Column("postcode", sa.String(), nullable=False),

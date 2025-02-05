@@ -72,6 +72,7 @@ class TestCreateAccount:
     @pytest.mark.asyncio
     async def test_missing_customer(
         self,
+        customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
     ) -> None:
         payload = {
@@ -80,6 +81,9 @@ class TestCreateAccount:
             "initial_balance": 100,
             "customer_id": "23fd1b92-4463-4659-913b-49ef7e4d48b9",
         }
+
+        def override_get_customer_repository() -> CustomerRepository:
+            return customer_repository
 
         def override_get_account_repository() -> AccountsRepository:
             return account_repository
