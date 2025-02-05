@@ -1,8 +1,10 @@
+import os
 from typing import Any, AsyncIterator, Callable
 from uuid import uuid4
 
 import pytest
 import structlog
+from dotenv import load_dotenv
 from psycopg import Connection
 from pytest_postgresql import factories
 from sqlalchemy import URL
@@ -41,6 +43,15 @@ async def database_engine(postgresql: Connection) -> AsyncIterator[AsyncEngine]:
     yield engine
 
     await engine.dispose()
+
+
+@pytest.fixture(scope="session", autouse=True)
+def load_env_vars() -> None:
+    project_root = os.path.abspath(os.path.dirname(__file__))
+    env_path = os.path.join(project_root, "..", ".env")
+
+    if os.path.isfile(env_path):
+        load_dotenv(dotenv_path=env_path, override=True)
 
 
 @pytest.fixture

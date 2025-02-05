@@ -1,3 +1,4 @@
+from typing import Any
 from unittest.mock import Mock, patch
 from uuid import UUID
 
@@ -82,3 +83,40 @@ class TestCreateCustomer:
             response = client.post("/dummy-bank/v1/customer", json=payload)
             assert response.status_code == 201
             assert response.json() == expected
+
+    @pytest.mark.parametrize(
+        argnames=["field", "value"],
+        argvalues=[
+            ("email", "dummy"),
+            ("first_name", None),
+            ("first_name", "remove"),
+            ("last_name", None),
+            ("last_name", "remove"),
+        ],
+    )
+    @pytest.mark.asyncio
+    async def test_bad_payload(
+        self, customer_repository: CustomerRepository, field: str, value: Any
+    ) -> None:
+        payload = {
+            "email": "john.smith@example.com",
+            "first_name": "John",
+            "last_name": "Smith",
+            "middle_names": "Smith",
+            "phone": "+555555555",
+        }
+
+        if value is not None and value == "remove":
+            payload.pop(field)
+        else:
+            payload[field] = value
+
+        def override_get_repository() -> CustomerRepository:
+            return customer_repository
+
+        app = create_app(settings=Settings(), logger=Mock())
+        app.dependency_overrides[get_customer_repository] = override_get_repository
+
+        with TestClient(app) as client:
+            response = client.post("/dummy-bank/v1/customer", json=payload)
+            assert response.status_code == 422

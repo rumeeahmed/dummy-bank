@@ -34,7 +34,7 @@ def upgrade() -> None:
     )
 
     op.create_table(
-        "account",
+        "accounts",
         sa.Column("id", sa.Uuid(), nullable=False),
         sa.Column("created_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("updated_at", sa.DateTime(timezone=True), nullable=False),
