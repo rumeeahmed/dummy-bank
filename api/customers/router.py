@@ -14,11 +14,11 @@ from api.models import (
 from domain import Customer
 from repository import SearchCondition
 
-router = APIRouter(tags=["customer"])
+router = APIRouter(tags=["customers"])
 
 
 @router.get(
-    "/dummy-bank/v1/customer",
+    "/dummy-bank/v1/customers",
     response_model=PaginatedResponse,
     status_code=status.HTTP_200_OK,
     summary="List customers",
@@ -42,7 +42,7 @@ async def list_customers(
 
 
 @router.get(
-    "/dummy-bank/v1/customer/{customer_id}",
+    "/dummy-bank/v1/customers/{customer_id}",
     response_model=CustomerResponse,
     status_code=status.HTTP_200_OK,
     summary="Retrieve a customer by id",
@@ -59,7 +59,7 @@ async def get_customer_by_id(
 
 
 @router.post(
-    "/dummy-bank/v1/customer",
+    "/dummy-bank/v1/customers",
     response_model=CustomerResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Create Customer",
@@ -89,7 +89,7 @@ async def create_customer(
 
 
 @router.patch(
-    "/dummy-bank/v1/customer/{customer_id}",
+    "/dummy-bank/v1/customers/{customer_id}",
     response_model=CustomerResponse,
     status_code=status.HTTP_200_OK,
     summary="Update a Customer",

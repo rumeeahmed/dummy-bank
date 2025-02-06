@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Any, Self
 from uuid import UUID
 
 from pydantic import EmailStr, validate_call
@@ -60,3 +61,16 @@ class Customer:
         full_name = " ".join(name_parts)
 
         return full_name if full_name else None
+
+    @classmethod
+    def from_record(cls, record: Any) -> Self:
+        return cls(
+            id=record.id,
+            created_at=record.created_at,
+            updated_at=record.updated_at,
+            first_name=record.first_name,
+            middle_names=record.middle_names,
+            last_name=record.last_name,
+            email=record.email,
+            phone=record.phone,
+        )

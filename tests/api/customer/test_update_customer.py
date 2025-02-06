@@ -24,7 +24,7 @@ class TestCustomerNotFound:
 
         with TestClient(app) as client:
             response = client.patch(
-                "/dummy-bank/v1/customer/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
+                "/dummy-bank/v1/customers/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
                 json=payload,
             )
             assert response.status_code == 404
@@ -65,7 +65,7 @@ class TestUpdateField:
 
         with TestClient(app) as client:
             response = client.patch(
-                f"/dummy-bank/v1/customer/{existing.id}", json=request
+                f"/dummy-bank/v1/customers/{existing.id}", json=request
             )
             assert response.status_code == 200
             assert response.json()[field] == updated

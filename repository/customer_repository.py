@@ -47,16 +47,7 @@ class CustomerRepository(Repository):
 
         record = results[0]
 
-        return Customer(
-            id=record.id,
-            created_at=record.created_at,
-            updated_at=record.updated_at,
-            first_name=record.first_name,
-            middle_names=record.middle_names,
-            last_name=record.last_name,
-            email=record.email,
-            phone=record.phone,
-        )
+        return Customer.from_record(record)
 
     async def load_customer_with_id(self, id: UUID) -> Customer | None:
         condition = SearchCondition(id=id)
@@ -74,19 +65,7 @@ class CustomerRepository(Repository):
             results = (await session.scalars(stmt)).all()
 
         return {
-            "results": [
-                Customer(
-                    id=record.id,
-                    created_at=record.created_at,
-                    updated_at=record.updated_at,
-                    first_name=record.first_name,
-                    middle_names=record.middle_names,
-                    last_name=record.last_name,
-                    email=record.email,
-                    phone=record.phone,
-                )
-                for record in results
-            ],
+            "results": [Customer.from_record(record) for record in results],
             "page": page,
             "page_size": page_size,
             "total_pages": total_pages,

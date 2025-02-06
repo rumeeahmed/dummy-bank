@@ -14,7 +14,7 @@ from repository import AccountsRepository, CustomerRepository
 
 
 class TestCreateAccount:
-    @patch("api.account.router.uuid4")
+    @patch("api.accounts.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test(

@@ -40,13 +40,13 @@ class TestCustomerAlreadyExistsForUser:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/customer", json=payload)
+            response = client.post("/dummy-bank/v1/customers", json=payload)
             assert response.status_code == 409
             assert response.json() == {"detail": "customer already exists"}
 
 
 class TestCreateCustomer:
-    @patch("api.customer.router.uuid4")
+    @patch("api.customers.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test(
@@ -80,7 +80,7 @@ class TestCreateCustomer:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/customer", json=payload)
+            response = client.post("/dummy-bank/v1/customers", json=payload)
             assert response.status_code == 201
             assert response.json() == expected
 
@@ -118,5 +118,5 @@ class TestCreateCustomer:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/customer", json=payload)
+            response = client.post("/dummy-bank/v1/customers", json=payload)
             assert response.status_code == 422

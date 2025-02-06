@@ -50,7 +50,7 @@ class TestGetCustomer:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.get(f"/dummy-bank/v1/customer/{existing_customer.id}")
+            response = client.get(f"/dummy-bank/v1/customers/{existing_customer.id}")
             assert response.status_code == 200
             assert response.json() == expected
 
@@ -65,6 +65,6 @@ class TestCustomerNotFound:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.get(f"/dummy-bank/v1/customer/{uuid4()}")
+            response = client.get(f"/dummy-bank/v1/customers/{uuid4()}")
             assert response.status_code == 404
             assert response.json() == {"detail": "customer not found"}

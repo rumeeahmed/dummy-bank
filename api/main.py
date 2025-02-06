@@ -9,8 +9,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
 from api import exceptions
-from api.account.router import router as account_router
-from api.customer.router import router as customer_router
+from api.accounts.router import router as accounts_router
+from api.customers.router import router as customers_router
 from api.exception_handlers import (
     handle_already_exists_error,
     handle_invalid_request_error,
@@ -53,8 +53,8 @@ def create_app(settings: Settings, logger: structlog.stdlib.BoundLogger) -> Fast
     app.add_exception_handler(
         exceptions.InvalidRequestError, handle_invalid_request_error
     )
-    app.include_router(account_router)
-    app.include_router(customer_router)
+    app.include_router(accounts_router)
+    app.include_router(customers_router)
     return app
 
 

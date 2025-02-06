@@ -7,7 +7,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from repository.db_customer import Base  # Ensure this import exists
 
 
-class DBAccount(Base):
+class DBAddress(Base):
     __tablename__ = "addresses"
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True)
     customer_id: Mapped[uuid.UUID] = mapped_column(

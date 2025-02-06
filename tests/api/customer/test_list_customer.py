@@ -22,7 +22,7 @@ class TestListCustomersThatDontExist:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/customer")
+            response = client.get("/dummy-bank/v1/customers")
             assert response.status_code == 200
             assert response.json() == {
                 "page": 1,
@@ -74,7 +74,7 @@ class TestListCustomers:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/customer", params=params)
+            response = client.get("/dummy-bank/v1/customers", params=params)
             assert response.status_code == 200
 
             response_json = response.json()
@@ -113,7 +113,7 @@ class TestListCustomers:
         app.dependency_overrides[get_customer_repository] = override_get_repository
 
         with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/customer")
+            response = client.get("/dummy-bank/v1/customers")
             assert response.status_code == 200
 
             response_json = response.json()

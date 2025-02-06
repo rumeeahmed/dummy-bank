@@ -5,7 +5,12 @@ import structlog
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from repository import AccountsRepository, CustomerRepository, Repository
+from repository import (
+    AccountsRepository,
+    AddressesRepository,
+    CustomerRepository,
+    Repository,
+)
 
 from .settings import Settings
 
@@ -40,9 +45,16 @@ def get_account_repository(
     yield AccountsRepository(engine=engine)
 
 
+def get_address_repository(
+    engine: Annotated[AsyncEngine, Depends(get_database_engine)],
+) -> Iterator[AddressesRepository]:
+    yield AddressesRepository(engine=engine)
+
+
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 LoggerDep = Annotated[structlog.stdlib.BoundLogger, Depends(get_logger)]
 DatabaseEngineDep = Annotated[AsyncEngine, Depends(get_database_engine)]
 RepositoryDep = Annotated[Repository, Depends(get_repository)]
 CustomerRepositoryDep = Annotated[CustomerRepository, Depends(get_customer_repository)]
 AccountRepositoryDep = Annotated[AccountsRepository, Depends(get_account_repository)]
+AddressRepositoryDep = Annotated[AddressesRepository, Depends(get_address_repository)]
