@@ -21,6 +21,8 @@ class Address:
         post_code: str,
         county: str | None,
         country: str,
+        latitude: str | None,
+        longitude: str | None,
     ) -> None:
         self._id = id
         self._customer_id = customer_id
@@ -33,6 +35,8 @@ class Address:
         self.post_code = post_code
         self.county = county
         self.country = country
+        self.latitude = latitude
+        self.longitude = longitude
 
     @property
     def created_at(self) -> datetime | None:
@@ -80,4 +84,6 @@ class Address:
             town=record.town,
             county=record.county,
             country=record.country,
+            latitude=record.latitude,
+            longitude=record.longitude,
         )

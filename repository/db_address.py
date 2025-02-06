@@ -22,4 +22,6 @@ class DBAddress(Base):
     postcode: Mapped[str] = mapped_column(String, nullable=False)
     county: Mapped[str] = mapped_column(String, nullable=True)
     country: Mapped[str] = mapped_column(String, nullable=False)
+    latitude: Mapped[str] = mapped_column(String, nullable=True)
+    longitude: Mapped[str] = mapped_column(String, nullable=True)
     customer = relationship("DBCustomer", backref="addresses")

@@ -59,6 +59,8 @@ def upgrade() -> None:
         sa.Column("town", sa.String(), nullable=False),
         sa.Column("postcode", sa.String(), nullable=False),
         sa.Column("country", sa.String(), nullable=False),
+        sa.Column("latitude", sa.String(), nullable=True),
+        sa.Column("longitude", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["customer_id"], ["customers.id"], ondelete="CASCADE"),
         sa.PrimaryKeyConstraint("id"),
     )
