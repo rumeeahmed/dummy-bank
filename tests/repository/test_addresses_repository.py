@@ -7,9 +7,8 @@ from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from sqlalchemy.exc import IntegrityError
 
-from domain import Account, Address, Customer
+from domain import Address, Customer
 from repository import (
-    AccountsRepository,
     AddressesRepository,
     CustomerRepository,
     SearchCondition,
@@ -107,10 +106,10 @@ class TestLoadAddressWithCustomerId:
 
     @pytest.mark.asyncio
     async def test_does_not_exists(
-        self, account_repository: AccountsRepository
+        self, addresses_repository: AddressesRepository
     ) -> None:
         customer_id = UUID("0a6f8e46-4e98-4ec5-a066-df1a18f8c9b3")
-        loaded = await account_repository.load_account_with_customer_id(customer_id)
+        loaded = await addresses_repository.load_addresses_with_customer_id(customer_id)
         assert loaded is None
 
 
@@ -124,7 +123,7 @@ class TestSaveAddress:
         make_address: Callable[..., Address],
         make_customer: Callable[..., Customer],
     ) -> None:
-        # Account needs a customer
+        # Address needs a customer
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
@@ -155,16 +154,16 @@ class TestSaveAddress:
         assert loaded.longitude == address.longitude
 
     @pytest.mark.asyncio
-    async def test_save_account_with_missing_customer(
+    async def test_save_address_with_missing_customer(
         self,
-        account_repository: AccountsRepository,
+        addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
+        make_address: Callable[..., Address],
         make_customer: Callable[..., Customer],
     ) -> None:
-        account = make_account()
+        address = make_address()
         with pytest.raises(IntegrityError):
-            await account_repository.save_account(account)
+            await addresses_repository.save_address(address)
 
 
 class TestLoadAddresses:
