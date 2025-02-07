@@ -186,6 +186,9 @@ async def transfer(
     account = await repository.load_account_with_id(account_id)
     account_2 = await repository.load_account_with_id(body.account_id)
     if not account or not account_2:
+        logger.info(
+            "account not found", account_id1=account_id, account_id2=body.account_id
+        )
         raise exceptions.NotFoundError("account not found")
 
     try:
