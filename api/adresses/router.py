@@ -3,7 +3,12 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, status
 
 from api import exceptions
-from api.dependencies import AddressesRepositoryDep, CustomerRepositoryDep, SettingsDep
+from api.dependencies import (
+    AddressesRepositoryDep,
+    CustomerRepositoryDep,
+    LoggerDep,
+    SettingsDep,
+)
 from domain import Address
 
 from ..models import (
@@ -24,11 +29,24 @@ router = APIRouter(tags=["addresses"])
     summary="List addresses for customer",
 )
 async def list_addresses(
-    repository: AddressesRepositoryDep, params: AddressesQueryParam = Depends()
+    logger: LoggerDep,
+    repository: AddressesRepositoryDep,
+    params: AddressesQueryParam = Depends(),
 ) -> PaginatedResponse:
+    logger.info("retrieving addresses")
+
     paginated_addresses = await repository.load_paginated_addresses(
         page_size=params.page_size, page=params.page, customer_id=params.customer_id
     )
+
+    logger.info(
+        "retrieved addresses",
+        n=len(paginated_addresses),
+        total_count=paginated_addresses["total_count"],
+        total_pages=paginated_addresses["total_pages"],
+        page=paginated_addresses["page"],
+    )
+
     return PaginatedResponse[AddressResponse](
         results=[
             AddressResponse.model_validate(customer)
@@ -48,6 +66,7 @@ async def list_addresses(
     summary="Create Address",
 )
 async def create_address(
+    logger: LoggerDep,
     settings: SettingsDep,
     customer_repository: CustomerRepositoryDep,
     addresses_repository: AddressesRepositoryDep,
@@ -58,6 +77,7 @@ async def create_address(
     )
 
     if not existing_customer:
+        logger.info("customer not found", customer_id=body.customer_id)
         raise exceptions.NotFoundError("customer not found")
 
     address = Address(
@@ -83,10 +103,12 @@ async def create_address(
         address.latitude = coordinates.latitude if coordinates else None
         address.longitude = coordinates.longitude if coordinates else None
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error("error retrieving coordinates", error=str(e))
 
     await addresses_repository.save_address(address)
+    logger.info("address created", address_id=address.id)
+
     return AddressResponse.model_validate(address)
 
 
@@ -97,6 +119,7 @@ async def create_address(
     summary="Update Address",
 )
 async def update_address(
+    logger: LoggerDep,
     settings: SettingsDep,
     address_id: UUID,
     addresses_repository: AddressesRepositoryDep,
@@ -105,6 +128,7 @@ async def update_address(
     existing = await addresses_repository.load_address_with_id(id=address_id)
 
     if not existing:
+        logger.info("address not found", address_id=address_id)
         raise exceptions.NotFoundError("address not found")
 
     to_update = body.model_dump(exclude_unset=True)
@@ -137,8 +161,10 @@ async def update_address(
         existing.latitude = coordinates.latitude if coordinates else None
         existing.longitude = coordinates.longitude if coordinates else None
 
-    except Exception:
-        pass
+    except Exception as e:
+        logger.error("error retrieving coordinates", error=str(e))
+
+    logger.info("address updated", address_id=address_id, to_update=to_update)
 
     await addresses_repository.save_address(existing)
     return AddressResponse.model_validate(existing)

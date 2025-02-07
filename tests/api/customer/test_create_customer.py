@@ -13,7 +13,7 @@ from domain import Customer
 from repository import CustomerRepository
 
 
-class TestCustomerAlreadyExistsForUser:
+class TestCustomerAlreadyExists:
     @pytest.mark.asyncio
     async def test(self, customer_repository: CustomerRepository) -> None:
         payload = {

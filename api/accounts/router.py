@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, status
 
 from api import exceptions
-from api.dependencies import AccountRepositoryDep, CustomerRepositoryDep
+from api.dependencies import AccountRepositoryDep, CustomerRepositoryDep, LoggerDep
 from domain import Account
 
 from ..models import (
@@ -25,11 +25,24 @@ router = APIRouter(tags=["accounts"])
     summary="List accounts for customer",
 )
 async def list_accounts(
-    repository: AccountRepositoryDep, params: AccountsQueryParams = Depends()
+    logger: LoggerDep,
+    repository: AccountRepositoryDep,
+    params: AccountsQueryParams = Depends(),
 ) -> PaginatedResponse:
+    logger.info("retrieving accounts")
+
     paginated_accounts = await repository.load_paginated_accounts(
         page_size=params.page_size, page=params.page, customer_id=params.customer_id
     )
+
+    logger.info(
+        "retrieved accounts",
+        n=len(paginated_accounts),
+        total_count=paginated_accounts["total_count"],
+        total_pages=paginated_accounts["total_pages"],
+        page=paginated_accounts["page"],
+    )
+
     return PaginatedResponse[AccountResponse](
         results=[
             AccountResponse.model_validate(customer)
@@ -49,15 +62,19 @@ async def list_accounts(
     summary="Create Account",
 )
 async def create_account(
+    logger: LoggerDep,
     customer_repository: CustomerRepositoryDep,
     account_repository: AccountRepositoryDep,
     body: CreateAccount,
 ) -> AccountResponse:
+    logger.info("retrieving customer", customer_id=body.customer_id)
+
     existing_customer = await customer_repository.load_customer_with_id(
         body.customer_id
     )
 
     if not existing_customer:
+        logger.info("customer not found", customer_id=body.customer_id)
         raise exceptions.NotFoundError("customer not found")
 
     account = Account(
@@ -69,6 +86,9 @@ async def create_account(
         created_at=None,
         updated_at=None,
     )
+
+    logger.info("saving account", account_id=account.id)
+
     await account_repository.save_account(account)
     return AccountResponse.model_validate(account)
 
@@ -80,16 +100,25 @@ async def create_account(
     summary="Deposit money into Account",
 )
 async def deposit(
+    logger: LoggerDep,
     repository: AccountRepositoryDep,
     account_id: UUID,
     body: BalanceUpdate,
 ) -> AccountResponse:
+    logger.info("depositing amount", account_id=account_id, amount=body.amount)
+
     account = await repository.load_account_with_id(account_id)
     if not account:
+        logger.info("account not found", account_id=account_id)
         raise exceptions.NotFoundError("account not found")
 
     account.increase_balance(body.amount)
+
+    logger.info(
+        "balance updated", account_id=account_id, balance=account.account_balance
+    )
     await repository.save_account(account)
+
     return AccountResponse.model_validate(account)
 
 
@@ -100,18 +129,31 @@ async def deposit(
     summary="Withdraw money from Account",
 )
 async def withdraw(
+    logger: LoggerDep,
     repository: AccountRepositoryDep,
     account_id: UUID,
     body: BalanceUpdate,
 ) -> AccountResponse:
+    logger.info("withdrawing amount", account_id=account_id, amount=body.amount)
+
     account = await repository.load_account_with_id(account_id)
     if not account:
+        logger.info("account not found", account_id=account_id)
         raise exceptions.NotFoundError("account not found")
 
     try:
         account.decrease_balance(body.amount)
+        logger.info(
+            "balance updated", account_id=account_id, balance=account.account_balance
+        )
         await repository.save_account(account)
     except ValueError as e:
+        logger.error(
+            "failed to deposit money",
+            account_id=account_id,
+            amount=body.amount,
+            error=str(e),
+        )
         raise exceptions.InvalidRequestError(str(e))
 
     return AccountResponse.model_validate(account)
@@ -124,6 +166,7 @@ async def withdraw(
     summary="Transfer money from Account",
 )
 async def transfer(
+    logger: LoggerDep,
     repository: AccountRepositoryDep,
     account_id: UUID,
     body: BalanceTransfer,
@@ -136,11 +179,23 @@ async def transfer(
     try:
         account.decrease_balance(body.amount)
         await repository.save_account(account)
+        logger.info(
+            "balance updated", account_id=account_id, balance=account.account_balance
+        )
     except ValueError as e:
+        logger.error(
+            "failed to transfer money",
+            account_id=account_id,
+            amount=body.amount,
+            error=str(e),
+        )
         raise exceptions.InvalidRequestError(str(e))
 
     account_2.increase_balance(body.amount)
     await repository.save_account(account_2)
+    logger.info(
+        "balance updated", account_id=account_2.id, balance=account_2.account_balance
+    )
 
     return [
         AccountResponse.model_validate(account),

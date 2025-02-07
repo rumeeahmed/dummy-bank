@@ -3,7 +3,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, status
 
 from api import exceptions
-from api.dependencies import CustomerRepositoryDep
+from api.dependencies import CustomerRepositoryDep, LoggerDep
 from api.models import (
     CreateCustomer,
     CustomerResponse,
@@ -24,11 +24,24 @@ router = APIRouter(tags=["customers"])
     summary="List customers",
 )
 async def list_customers(
-    repository: CustomerRepositoryDep, params: PaginationQueryParams = Depends()
+    logger: LoggerDep,
+    repository: CustomerRepositoryDep,
+    params: PaginationQueryParams = Depends(),
 ) -> PaginatedResponse:
+    logger.info("retrieving customers")
+
     paginated_customers = await repository.load_paginated_customers(
         page_size=params.page_size, page=params.page
     )
+
+    logger.info(
+        "retrieved customers",
+        n=len(paginated_customers),
+        total_count=paginated_customers["total_count"],
+        total_pages=paginated_customers["total_pages"],
+        page=paginated_customers["page"],
+    )
+
     return PaginatedResponse[CustomerResponse](
         results=[
             CustomerResponse.model_validate(customer)
@@ -48,11 +61,12 @@ async def list_customers(
     summary="Retrieve a customer by id",
 )
 async def get_customer_by_id(
-    repository: CustomerRepositoryDep, customer_id: UUID
+    logger: LoggerDep, repository: CustomerRepositoryDep, customer_id: UUID
 ) -> CustomerResponse:
     customer = await repository.load_customer_with_id(customer_id)
 
     if not customer:
+        logger.info("customer not found", customer_id=customer_id)
         raise exceptions.NotFoundError("customer not found")
 
     return CustomerResponse.model_validate(customer)
@@ -65,13 +79,14 @@ async def get_customer_by_id(
     summary="Create Customer",
 )
 async def create_customer(
-    repository: CustomerRepositoryDep, body: CreateCustomer
+    logger: LoggerDep, repository: CustomerRepositoryDep, body: CreateCustomer
 ) -> CustomerResponse:
     existing_customer = await repository.load_customer(
         SearchCondition(email=body.email)
     )
 
     if existing_customer:
+        logger.info("customer already exists", customer_id=existing_customer.id)
         raise exceptions.AlreadyExistsError("customer already exists")
 
     customer = Customer(
@@ -85,6 +100,7 @@ async def create_customer(
         updated_at=None,
     )
     await repository.save_customer(customer)
+    logger.info("customer created", customer_id=customer.id)
     return CustomerResponse.model_validate(customer)
 
 
@@ -95,29 +111,37 @@ async def create_customer(
     summary="Update a Customer",
 )
 async def update_application(
-    repository: CustomerRepositoryDep, customer_id: UUID, body: UpdateCustomer
+    logger: LoggerDep,
+    repository: CustomerRepositoryDep,
+    customer_id: UUID,
+    body: UpdateCustomer,
 ) -> CustomerResponse:
-    existing = await repository.load_customer_with_id(customer_id)
+    existing_customer = await repository.load_customer_with_id(customer_id)
 
-    if existing is None:
+    if existing_customer is None:
+        logger.info("customer not find", customer_id=customer_id)
         raise exceptions.NotFoundError("customer not found")
 
     to_update = body.model_dump(exclude_unset=True)
 
     if "first_name" in to_update:
-        existing.first_name = to_update["first_name"]
+        existing_customer.first_name = to_update["first_name"]
 
     if "middle_names" in to_update:
-        existing.middle_names = to_update["middle_names"]
+        existing_customer.middle_names = to_update["middle_names"]
 
     if "last_name" in to_update:
-        existing.last_name = to_update["last_name"]
+        existing_customer.last_name = to_update["last_name"]
 
     if "phone" in to_update:
-        existing.phone = to_update["phone"]
+        existing_customer.phone = to_update["phone"]
 
     if "email" in to_update:
-        existing.email = to_update["email"]
+        existing_customer.email = to_update["email"]
 
-    await repository.save_customer(existing)
-    return CustomerResponse.model_validate(existing)
+    await repository.save_customer(existing_customer)
+    logger.info(
+        "customer updated", customer_id=existing_customer.id, to_update=to_update
+    )
+
+    return CustomerResponse.model_validate(existing_customer)

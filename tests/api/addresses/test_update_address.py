@@ -102,7 +102,7 @@ class TestUpdateField:
         "lat, lon",
         [
             (None, None),
-            ("444", "666"u),
+            ("444", "666"),
         ],
     )
     @pytest.mark.asyncio
