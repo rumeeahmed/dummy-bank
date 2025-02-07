@@ -4,8 +4,6 @@ from uuid import UUID
 
 from pydantic import NonNegativeFloat, NonNegativeInt, validate_call
 
-# from repository.db_account import DBAccount
-
 
 class Account:
     @validate_call

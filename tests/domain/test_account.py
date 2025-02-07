@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 from typing import Callable
 from uuid import UUID
@@ -6,6 +7,7 @@ import pytest
 from pydantic import ValidationError
 
 from domain import Account
+from repository import DBAccount
 
 
 class TestID:
@@ -190,3 +192,24 @@ class TestBalance:
         account = make_account(account_balance=value)
         with pytest.raises(ValueError):
             account.decrease_balance(5.67)
+
+
+class TestFromRecord:
+    def test(self) -> None:
+        record = DBAccount(
+            id=uuid.uuid4(),
+            account_type="credit",
+            account_number="1234",
+            account_balance=10000,
+            customer_id=uuid.uuid4(),
+            created_at=datetime.now(tz=timezone.utc),
+            updated_at=datetime.now(tz=timezone.utc),
+        )
+        account = Account.from_record(record)
+        assert account.id == record.id
+        assert account.customer_id == record.customer_id
+        assert account.account_type == record.account_type
+        assert account.account_number == record.account_number
+        assert account.account_balance == record.account_balance
+        assert account.created_at == record.created_at
+        assert account.updated_at == record.updated_at

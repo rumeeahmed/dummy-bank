@@ -1,10 +1,11 @@
 from datetime import datetime, timezone
 from typing import Callable
-from uuid import UUID
+from uuid import UUID, uuid4
 
 import pytest
 
 from domain import Customer
+from repository import DBCustomer
 
 
 class TestID:
@@ -199,3 +200,26 @@ class TestEmail:
         customer = make_customer()
         with pytest.raises(ValueError):
             customer.email = "bob"
+
+
+class TestFromRecord:
+    def test(self) -> None:
+        record = DBCustomer(
+            id=uuid4(),
+            created_at=datetime.now(tz=timezone.utc),
+            updated_at=datetime.now(tz=timezone.utc),
+            first_name="Rumee",
+            middle_names="Bob",
+            last_name="Ahmed",
+            email="bob@example.com",
+            phone="0123456789",
+        )
+        account = Customer.from_record(record)
+        assert account.id == record.id
+        assert account.created_at == record.created_at
+        assert account.updated_at == record.updated_at
+        assert account.first_name == record.first_name
+        assert account.middle_names == record.middle_names
+        assert account.last_name == record.last_name
+        assert account.email == record.email
+        assert account.phone == record.phone

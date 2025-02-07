@@ -77,7 +77,7 @@ class Address:
             customer_id=record.customer_id,
             created_at=record.created_at,
             updated_at=record.updated_at,
-            building_name=record.id.building_name,
+            building_name=record.building_name,
             building_number=record.building_number,
             street=record.street,
             post_code=record.post_code,

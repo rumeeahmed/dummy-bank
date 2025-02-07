@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from repository.db_customer import Base  # Ensure this import exists
+from repository.db_customer import Base
 
 
 class DBAddress(Base):
@@ -19,7 +19,7 @@ class DBAddress(Base):
     building_number: Mapped[str] = mapped_column(String, nullable=False)
     street: Mapped[str] = mapped_column(String, nullable=False)
     town: Mapped[str] = mapped_column(String, nullable=False)
-    postcode: Mapped[str] = mapped_column(String, nullable=False)
+    post_code: Mapped[str] = mapped_column(String, nullable=False)
     county: Mapped[str] = mapped_column(String, nullable=True)
     country: Mapped[str] = mapped_column(String, nullable=False)
     latitude: Mapped[str] = mapped_column(String, nullable=True)
