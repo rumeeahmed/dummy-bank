@@ -34,18 +34,18 @@ class TestLoadCustomerWithId:
         loaded = await customer_repository.load_customer_with_id(customer_id)
 
         assert loaded is not None
-        assert customer.id == loaded.id
-        assert customer.created_at == FakeDatetime(
+        assert loaded.id == customer.id
+        assert loaded.created_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert customer.updated_at == FakeDatetime(
+        assert loaded.updated_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert customer.first_name == loaded.first_name
-        assert customer.middle_names == loaded.middle_names
-        assert customer.last_name == loaded.last_name
-        assert customer.email == loaded.email
-        assert customer.phone == loaded.phone
+        assert loaded.first_name == customer.first_name
+        assert loaded.middle_names == customer.middle_names
+        assert loaded.last_name == customer.last_name
+        assert loaded.email == customer.email
+        assert loaded.phone == customer.phone
 
     @pytest.mark.asyncio
     async def test_does_not_exists(
@@ -75,18 +75,18 @@ class TestSaveCustomer:
 
         # Load it back out, timestamps should be populated
         assert loaded is not None
-        assert customer.id == loaded.id
-        assert customer.created_at == FakeDatetime(
+        assert loaded.id == customer.id
+        assert loaded.created_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert customer.updated_at == FakeDatetime(
+        assert loaded.updated_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert customer.first_name == loaded.first_name
-        assert customer.middle_names == loaded.middle_names
-        assert customer.last_name == loaded.last_name
-        assert customer.email == loaded.email
-        assert customer.phone == loaded.phone
+        assert loaded.first_name == customer.first_name
+        assert loaded.middle_names == customer.middle_names
+        assert loaded.last_name == customer.last_name
+        assert loaded.email == customer.email
+        assert loaded.phone == customer.phone
 
 
 class TestLoadCustomer:
@@ -113,18 +113,18 @@ class TestLoadCustomer:
         loaded = await customer_repository.load_customer(search_condition=condition)
 
         assert loaded is not None
-        assert customer.id == loaded.id
-        assert customer.created_at == FakeDatetime(
+        assert loaded.id == customer.id
+        assert loaded.created_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert customer.updated_at == FakeDatetime(
+        assert loaded.updated_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert customer.first_name == loaded.first_name
-        assert customer.middle_names == loaded.middle_names
-        assert customer.last_name == loaded.last_name
-        assert customer.email == loaded.email
-        assert customer.phone == loaded.phone
+        assert loaded.first_name == customer.first_name
+        assert loaded.middle_names == customer.middle_names
+        assert loaded.last_name == customer.last_name
+        assert loaded.email == customer.email
+        assert loaded.phone == customer.phone
 
     @pytest.mark.parametrize(
         "field, value",

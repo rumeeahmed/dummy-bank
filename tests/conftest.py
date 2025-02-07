@@ -14,7 +14,7 @@ from structlog.stdlib import BoundLogger
 from api.settings import Settings
 from lib.geolocation_client import GoogleMapsClient
 from lib.http_client import BaseHTTPClient
-from repository import AccountsRepository, Base, CustomerRepository
+from repository import AccountsRepository, AddressesRepository, Base, CustomerRepository
 
 pytest_plugins = [
     "tests.make_domain_objects",
@@ -64,6 +64,11 @@ async def customer_repository(database_engine: AsyncEngine) -> CustomerRepositor
 @pytest.fixture
 async def account_repository(database_engine: AsyncEngine) -> AccountsRepository:
     return AccountsRepository(engine=database_engine)
+
+
+@pytest.fixture
+async def addresses_repository(database_engine: AsyncEngine) -> AddressesRepository:
+    return AddressesRepository(engine=database_engine)
 
 
 @pytest.fixture

@@ -7,88 +7,101 @@ from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from sqlalchemy.exc import IntegrityError
 
-from domain import Account, Customer
-from repository import AccountsRepository, CustomerRepository, SearchCondition
+from domain import Account, Address, Customer
+from repository import (
+    AccountsRepository,
+    AddressesRepository,
+    CustomerRepository,
+    SearchCondition,
+)
 
 
-class TestLoadAccountWithId:
+class TestLoadAddressWithId:
     @pytest.mark.asyncio
     @freeze_time("2018-11-13T15:16:08")
     async def test_exists(
         self,
-        account_repository: AccountsRepository,
+        addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
+        make_address: Callable[..., Address],
         make_customer: Callable[..., Customer],
     ) -> None:
         # Create and store the customer
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
-        account = make_account(customer_id=customer.id)
-        await account_repository.save_account(account)
+        address = make_address(customer_id=customer.id)
+        await addresses_repository.save_address(address)
 
         # Retrieve and check its values
-        loaded = await account_repository.load_account_with_id(account.id)
+        loaded = await addresses_repository.load_address_with_id(address.id)
 
         assert loaded is not None
-        assert loaded.id == account.id
+        assert loaded.id == address.id
+        assert loaded.customer_id == address.customer_id
+        assert customer.id == address.customer_id
         assert loaded.created_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
         assert loaded.updated_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert loaded.account_type == account.account_type
-        assert loaded.account_number == account.account_number
-        assert loaded.customer_id == account.customer_id
-        assert loaded.customer_id == customer.id
-        assert loaded.account_balance == account.account_balance
+        assert loaded.building_name == address.building_name
+        assert loaded.building_number == address.building_number
+        assert loaded.street == address.street
+        assert loaded.town == address.town
+        assert loaded.post_code == address.post_code
+        assert loaded.county == address.county
+        assert loaded.country == address.country
+        assert loaded.latitude == address.latitude
+        assert loaded.longitude == address.longitude
 
     @pytest.mark.asyncio
     async def test_does_not_exists(
-        self, account_repository: AccountsRepository
+        self, addresses_repository: AddressesRepository
     ) -> None:
-        account_id = UUID("0a6f8e46-4e98-4ec5-a066-df1a18f8c9b3")
-        loaded = await account_repository.load_account_with_id(account_id)
+        address_id = UUID("0a6f8e46-4e98-4ec5-a066-df1a18f8c9b3")
+        loaded = await addresses_repository.load_address_with_id(address_id)
         assert loaded is None
 
 
-class TestLoadAccountWithCustomerId:
+class TestLoadAddressWithCustomerId:
     @pytest.mark.asyncio
     @freeze_time("2018-11-13T15:16:08")
     async def test_exists(
         self,
-        account_repository: AccountsRepository,
+        addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
+        make_address: Callable[..., Address],
         make_customer: Callable[..., Customer],
     ) -> None:
         # Create and store the customer
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
-        account = make_account(customer_id=customer.id)
-        await account_repository.save_account(account)
+        address = make_address(customer_id=customer.id)
+        await addresses_repository.save_address(address)
 
-        account2 = make_account(customer_id=customer.id)
-        await account_repository.save_account(account2)
+        address2 = make_address(customer_id=customer.id)
+        await addresses_repository.save_address(address2)
 
-        account3 = make_account(customer_id=customer.id)
-        await account_repository.save_account(account3)
+        address3 = make_address(customer_id=customer.id)
+        await addresses_repository.save_address(address3)
 
         customer2 = make_customer()
         await customer_repository.save_customer(customer2)
 
-        account4 = make_account(customer_id=customer2.id)
-        await account_repository.save_account(account4)
+        address4 = make_address(customer_id=customer2.id)
+        await addresses_repository.save_address(address4)
 
         # Retrieve and check its values
-        loaded = await account_repository.load_account_with_customer_id(customer.id)
+        loaded = await addresses_repository.load_addresses_with_customer_id(customer.id)
         assert loaded is not None
         assert len(loaded) == 3
 
-        loaded2 = await account_repository.load_account_with_customer_id(customer2.id)
+        loaded2 = await addresses_repository.load_addresses_with_customer_id(
+            customer2.id
+        )
         assert loaded2 is not None
         assert len(loaded2) == 1
 
@@ -101,66 +114,45 @@ class TestLoadAccountWithCustomerId:
         assert loaded is None
 
 
-class TestSaveAccount:
+class TestSaveAddress:
     @pytest.mark.asyncio
     @freeze_time("2018-11-13T15:16:08")
     async def test(
         self,
-        account_repository: AccountsRepository,
+        addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
+        make_address: Callable[..., Address],
         make_customer: Callable[..., Customer],
     ) -> None:
         # Account needs a customer
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
-        account = make_account(customer_id=customer.id)
-        await account_repository.save_account(account)
+        address = make_address(customer_id=customer.id)
+        await addresses_repository.save_address(address)
 
         # Load it back out, timestamps should be populated
-        loaded = await account_repository.load_account_with_id(account.id)
+        loaded = await addresses_repository.load_address_with_id(address.id)
 
         assert loaded is not None
-        assert loaded.id == account.id
+        assert loaded.id == address.id
+        assert loaded.customer_id == address.customer_id
+        assert customer.id == address.customer_id
         assert loaded.created_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
         assert loaded.updated_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert loaded.account_type == account.account_type
-        assert loaded.account_number == account.account_number
-        assert loaded.customer_id == account.customer_id
-        assert loaded.customer_id == customer.id
-        assert loaded.account_balance == account.account_balance
-
-    @pytest.mark.asyncio
-    @freeze_time("2018-11-13T15:16:08")
-    async def test_update_balance(
-        self,
-        account_repository: AccountsRepository,
-        customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
-    ) -> None:
-        customer = make_customer()
-        await customer_repository.save_customer(customer)
-
-        account = make_account(customer_id=customer.id)
-        await account_repository.save_account(account)
-
-        loaded = await account_repository.load_account_with_id(account.id)
-        assert loaded is not None
-        assert account.account_balance == loaded.account_balance
-
-        loaded.increase_balance(500)
-        await account_repository.save_account(loaded)
-
-        loaded2 = await account_repository.load_account_with_id(loaded.id)
-        assert loaded2 is not None
-        assert loaded.account_balance == loaded2.account_balance
-        assert loaded2.account_balance != account.account_balance
+        assert loaded.building_name == address.building_name
+        assert loaded.building_number == address.building_number
+        assert loaded.street == address.street
+        assert loaded.town == address.town
+        assert loaded.post_code == address.post_code
+        assert loaded.county == address.county
+        assert loaded.country == address.country
+        assert loaded.latitude == address.latitude
+        assert loaded.longitude == address.longitude
 
     @pytest.mark.asyncio
     async def test_save_account_with_missing_customer(
@@ -175,15 +167,15 @@ class TestSaveAccount:
             await account_repository.save_account(account)
 
 
-class TestLoadAccount:
+class TestLoadAddresses:
     @pytest.mark.parametrize(argnames="field", argvalues=["id"])
     @pytest.mark.asyncio
     @freeze_time("2018-11-13T15:16:08")
     async def test_exists(
         self,
-        account_repository: AccountsRepository,
+        addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
+        make_address: Callable[..., Address],
         make_customer: Callable[..., Customer],
         field: str,
     ) -> None:
@@ -191,35 +183,42 @@ class TestLoadAccount:
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
-        account = make_account(customer_id=customer.id)
-        await account_repository.save_account(account)
+        address = make_address(customer_id=customer.id)
+        await addresses_repository.save_address(address)
 
         # Choose the right search condition
         if field == "customer_id":
             value = getattr(customer, "id")
         else:
-            value = getattr(account, field)
+            value = getattr(address, field)
 
         condition = SearchCondition.model_validate({field: value})
 
         # Check the values
-        loaded = await account_repository.load_account(search_condition=condition)
+        loaded = await addresses_repository.load_address(search_condition=condition)
 
         assert loaded is not None
         assert len(loaded) == 1
 
-        assert loaded[0].id == account.id
+        assert loaded is not None
+        assert loaded[0].id == address.id
+        assert loaded[0].customer_id == address.customer_id
+        assert customer.id == address.customer_id
         assert loaded[0].created_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
         assert loaded[0].updated_at == FakeDatetime(
             2018, 11, 13, 15, 16, 8, tzinfo=datetime.timezone.utc
         )
-        assert loaded[0].account_type == account.account_type
-        assert loaded[0].account_number == account.account_number
-        assert loaded[0].customer_id == account.customer_id
-        assert loaded[0].customer_id == customer.id
-        assert loaded[0].account_balance == account.account_balance
+        assert loaded[0].building_name == address.building_name
+        assert loaded[0].building_number == address.building_number
+        assert loaded[0].street == address.street
+        assert loaded[0].town == address.town
+        assert loaded[0].post_code == address.post_code
+        assert loaded[0].county == address.county
+        assert loaded[0].country == address.country
+        assert loaded[0].latitude == address.latitude
+        assert loaded[0].longitude == address.longitude
 
     @pytest.mark.parametrize(
         "field, value",
@@ -230,8 +229,8 @@ class TestLoadAccount:
     )
     @pytest.mark.asyncio
     async def test_does_not_exists(
-        self, account_repository: AccountsRepository, field: str, value: str
+        self, addresses_repository: AddressesRepository, field: str, value: str
     ) -> None:
         condition = SearchCondition.model_validate({field: value})
-        loaded = await account_repository.load_account(search_condition=condition)
+        loaded = await addresses_repository.load_address(search_condition=condition)
         assert loaded is None

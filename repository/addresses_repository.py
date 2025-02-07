@@ -33,6 +33,8 @@ class AddressesRepository(Repository):
             post_code=address.post_code,
             county=address.county,
             country=address.country,
+            latitude=address.latitude,
+            longitude=address.longitude,
         )
 
         async with self._session() as session:
