@@ -75,7 +75,7 @@ class TestListAddressesThatDontExist:
         )
 
         with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/accounts", params=params)
+            response = client.get("/dummy-bank/v1/addresses", params=params)
             assert response.status_code == 200
             assert response.json() == {
                 "page": 1,

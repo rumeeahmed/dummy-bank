@@ -39,6 +39,17 @@ class BalanceTransfer(BalanceUpdate):
 
 
 class UpdateAddress(BaseModel):
+    building_name: str | None = None
+    building_number: str | None = None
+    street: str | None = None
+    town: str | None = None
+    post_code: str | None = None
+    county: str | None = None
+    country: str | None = None
+
+
+class CreateAddress(BaseModel):
+    customer_id: UUID
     building_name: str | None
     building_number: str
     street: str
@@ -46,7 +57,3 @@ class UpdateAddress(BaseModel):
     post_code: str
     county: str | None
     country: str
-
-
-class CreateAddress(UpdateAddress):
-    customer_id: UUID

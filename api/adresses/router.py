@@ -1,4 +1,4 @@
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 
@@ -11,6 +11,7 @@ from ..models import (
     AddressResponse,
     CreateAddress,
     PaginatedResponse,
+    UpdateAddress,
 )
 
 router = APIRouter(tags=["addresses"])
@@ -87,3 +88,57 @@ async def create_address(
 
     await addresses_repository.save_address(address)
     return AddressResponse.model_validate(address)
+
+
+@router.patch(
+    "/dummy-bank/v1/addresses/{address_id}",
+    response_model=AddressResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update Address",
+)
+async def update_address(
+    settings: SettingsDep,
+    address_id: UUID,
+    addresses_repository: AddressesRepositoryDep,
+    body: UpdateAddress,
+) -> AddressResponse:
+    existing = await addresses_repository.load_address_with_id(id=address_id)
+
+    if not existing:
+        raise exceptions.NotFoundError("address not found")
+
+    to_update = body.model_dump(exclude_unset=True)
+
+    if "building_name" in to_update:
+        existing.building_name = to_update["building_name"]
+
+    if "building_number" in to_update:
+        existing.building_number = to_update["building_number"]
+
+    if "street" in to_update:
+        existing.street = to_update["street"]
+
+    if "town" in to_update:
+        existing.town = to_update["town"]
+
+    if "post_code" in to_update:
+        existing.post_code = to_update["post_code"]
+
+    if "county" in to_update:
+        existing.county = to_update["county"]
+
+    if "country" in to_update:
+        existing.country = to_update["country"]
+
+    try:
+        coordinates = await settings.google_maps_client().get_coordinates(
+            existing.display_address
+        )
+        existing.latitude = coordinates.latitude if coordinates else None
+        existing.longitude = coordinates.longitude if coordinates else None
+
+    except Exception:
+        pass
+
+    await addresses_repository.save_address(existing)
+    return AddressResponse.model_validate(existing)
