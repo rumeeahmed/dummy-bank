@@ -1,3 +1,4 @@
+import uuid
 from typing import Any, Callable
 from unittest.mock import MagicMock, Mock, patch
 from uuid import UUID
@@ -12,7 +13,7 @@ from api.dependencies import (
 )
 from api.main import create_app
 from api.settings import Settings
-from domain import Customer
+from domain import Address, Customer
 from lib.geolocation_client import Coordinates, GoogleMapsClient
 from repository import AddressesRepository, CustomerRepository
 
@@ -83,6 +84,53 @@ class TestCreateAddress:
             response = client.post("/dummy-bank/v1/addresses", json=payload)
             assert response.status_code == 201
             assert response.json() == expected_payload
+
+    @pytest.mark.asyncio
+    async def test_customer_address_exists(
+        self,
+        customer_repository: CustomerRepository,
+        addresses_repository: AddressesRepository,
+        make_customer: Callable[..., Customer],
+        make_address: Callable[..., Address],
+    ) -> None:
+        customer = make_customer()
+        await customer_repository.save_customer(customer)
+
+        address = make_address(
+            post_code="Some postcode", customer_id=customer.id, id=uuid.uuid4()
+        )
+
+        await addresses_repository.save_address(address)
+
+        payload = {
+            "building_name": "Default Building",
+            "building_number": "123",
+            "street": "Main Street",
+            "town": "Springfield",
+            "post_code": "Some postcode",
+            "county": "Default County",
+            "country": "Default Country",
+            "customer_id": str(customer.id),
+        }
+
+        def override_get_customer_repository() -> CustomerRepository:
+            return customer_repository
+
+        def override_get_address_repository() -> AddressesRepository:
+            return addresses_repository
+
+        app = create_app(settings=Settings(), logger=Mock())
+        app.dependency_overrides[get_customer_repository] = (
+            override_get_customer_repository
+        )
+        app.dependency_overrides[get_address_repository] = (
+            override_get_address_repository
+        )
+
+        with TestClient(app) as client:
+            response = client.post("/dummy-bank/v1/addresses", json=payload)
+            assert response.status_code == 409
+            assert response.json() == {"detail": "address already exists"}
 
     @patch.object(GoogleMapsClient, "get_coordinates")
     @patch("api.adresses.router.uuid4")

@@ -10,6 +10,7 @@ from api.dependencies import (
     SettingsDep,
 )
 from domain import Address
+from repository import SearchCondition
 
 from ..models import (
     AddressesQueryParam,
@@ -79,6 +80,13 @@ async def create_address(
     if not existing_customer:
         logger.info("customer not found", customer_id=body.customer_id)
         raise exceptions.NotFoundError("customer not found")
+
+    existing_addresses = await addresses_repository.load_address(
+        SearchCondition(customer_id=body.customer_id, post_code=body.post_code)
+    )
+    if existing_addresses:
+        logger.info("address already exists", address_id=existing_addresses[0].id)
+        raise exceptions.AlreadyExistsError("address already exists")
 
     address = Address(
         id=uuid4(),

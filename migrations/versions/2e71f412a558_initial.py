@@ -28,8 +28,9 @@ def upgrade() -> None:
         sa.Column("first_name", sa.String(), nullable=False),
         sa.Column("middle_names", sa.String(), nullable=True),
         sa.Column("last_name", sa.String(), nullable=False),
-        sa.Column("email", sa.String(), nullable=True),
+        sa.Column("email", sa.String(), nullable=False),
         sa.Column("phone", sa.String(), nullable=True),
+        sa.UniqueConstraint("email"),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -43,6 +44,7 @@ def upgrade() -> None:
         sa.Column("account_balance", sa.Integer(), nullable=False),
         sa.Column("customer_id", sa.Uuid(), nullable=False),
         sa.ForeignKeyConstraint(["customer_id"], ["customers.id"], ondelete="CASCADE"),
+        sa.UniqueConstraint("customer_id", "account_type", "account_number"),
         sa.PrimaryKeyConstraint("id"),
     )
 
@@ -62,6 +64,7 @@ def upgrade() -> None:
         sa.Column("latitude", sa.String(), nullable=True),
         sa.Column("longitude", sa.String(), nullable=True),
         sa.ForeignKeyConstraint(["customer_id"], ["customers.id"], ondelete="CASCADE"),
+        sa.UniqueConstraint("customer_id", "post_code"),
         sa.PrimaryKeyConstraint("id"),
     )
     # ### end Alembic commands ###

@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, status
 from api import exceptions
 from api.dependencies import AccountRepositoryDep, CustomerRepositoryDep, LoggerDep
 from domain import Account
+from repository import SearchCondition
 
 from ..models import (
     AccountResponse,
@@ -76,6 +77,17 @@ async def create_account(
     if not existing_customer:
         logger.info("customer not found", customer_id=body.customer_id)
         raise exceptions.NotFoundError("customer not found")
+
+    existing_account = await account_repository.load_account(
+        SearchCondition(
+            customer_id=body.customer_id,
+            account_number=body.account_number,
+            account_type=body.account_type,
+        )
+    )
+    if existing_account:
+        logger.info("account already exists", address_id=existing_account[0].id)
+        raise exceptions.AlreadyExistsError("account already exists")
 
     account = Account(
         id=uuid4(),

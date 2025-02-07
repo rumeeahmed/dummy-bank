@@ -9,7 +9,7 @@ from freezegun import freeze_time
 from api.dependencies import get_account_repository, get_customer_repository
 from api.main import create_app
 from api.settings import Settings
-from domain import Customer
+from domain import Account, Customer
 from repository import AccountsRepository, CustomerRepository
 
 
@@ -26,9 +26,6 @@ class TestCreateAccount:
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
-
-        loaded_customer = await customer_repository.load_customer_with_id(customer.id)
-        assert loaded_customer is not None
 
         account_id = UUID("c57a1942-56ed-4e35-87af-2c4241b55149")
         mock_uuid.return_value = account_id
@@ -68,6 +65,48 @@ class TestCreateAccount:
             response = client.post("/dummy-bank/v1/accounts", json=payload)
             assert response.status_code == 201
             assert response.json() == expected_payload
+
+    @pytest.mark.asyncio
+    async def test_address_already_exists(
+        self,
+        customer_repository: CustomerRepository,
+        account_repository: AccountsRepository,
+        make_customer: Callable[..., Customer],
+        make_account: Callable[..., Account],
+    ) -> None:
+        customer = make_customer()
+        await customer_repository.save_customer(customer)
+
+        account = make_account(
+            customer_id=customer.id, account_type="debit", account_number="12345"
+        )
+        await account_repository.save_account(account)
+
+        payload = {
+            "account_type": "debit",
+            "account_number": "12345",
+            "initial_balance": 100,
+            "customer_id": str(customer.id),
+        }
+
+        def override_get_customer_repository() -> CustomerRepository:
+            return customer_repository
+
+        def override_get_account_repository() -> AccountsRepository:
+            return account_repository
+
+        app = create_app(settings=Settings(), logger=Mock())
+        app.dependency_overrides[get_customer_repository] = (
+            override_get_customer_repository
+        )
+        app.dependency_overrides[get_account_repository] = (
+            override_get_account_repository
+        )
+
+        with TestClient(app) as client:
+            response = client.post("/dummy-bank/v1/accounts", json=payload)
+            assert response.status_code == 409
+            assert response.json() == {"detail": "account already exists"}
 
     @pytest.mark.asyncio
     async def test_missing_customer(
