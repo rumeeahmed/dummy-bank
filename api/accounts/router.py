@@ -9,10 +9,10 @@ from domain import Account
 from ..models import (
     AccountResponse,
     AccountsQueryParams,
+    BalanceTransfer,
     BalanceUpdate,
     CreateAccount,
     PaginatedResponse,
-    TransferBalance,
 )
 
 router = APIRouter(tags=["accounts"])
@@ -126,7 +126,7 @@ async def withdraw(
 async def transfer(
     repository: AccountRepositoryDep,
     account_id: UUID,
-    body: TransferBalance,
+    body: BalanceTransfer,
 ) -> list[AccountResponse]:
     account = await repository.load_account_with_id(account_id)
     account_2 = await repository.load_account_with_id(body.account_id)

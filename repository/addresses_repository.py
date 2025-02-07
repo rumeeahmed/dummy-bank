@@ -30,7 +30,7 @@ class AddressesRepository(Repository):
             building_number=address.building_number,
             street=address.street,
             town=address.town,
-            postcode=address.post_code,
+            post_code=address.post_code,
             county=address.county,
             country=address.country,
         )
@@ -52,7 +52,7 @@ class AddressesRepository(Repository):
 
         return [Address.from_record(record) for record in results]
 
-    async def load_account_with_id(self, id: UUID) -> Address | None:
+    async def load_address_with_id(self, id: UUID) -> Address | None:
         condition = SearchCondition(id=id)
         addresses = await self.load_address(search_condition=condition)
         return addresses[0] if addresses else None
@@ -63,7 +63,7 @@ class AddressesRepository(Repository):
         condition = SearchCondition(customer_id=customer_id)
         return await self.load_address(search_condition=condition)
 
-    async def load_paginated_accounts(
+    async def load_paginated_addresses(
         self, page: int, page_size: int, customer_id: UUID
     ) -> dict[str, Any]:
         offset = (page - 1) * page_size
