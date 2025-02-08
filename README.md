@@ -19,7 +19,7 @@ Google API.
 ## Installation
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.13+
 - PostgreSQL
 - Docker & Docker Compose
 - Just
