@@ -33,7 +33,9 @@ async def list_accounts(
     logger.info("retrieving accounts")
 
     paginated_accounts = await repository.load_paginated_accounts(
-        page_size=params.page_size, page=params.page, customer_id=params.customer_id
+        page_size=params.page_size,
+        page=params.page,
+        customer_id=params.customer_id,
     )
 
     logger.info(
@@ -68,7 +70,7 @@ async def create_account(
     account_repository: AccountRepositoryDep,
     body: CreateAccount,
 ) -> AccountResponse:
-    logger.info("retrieving customer", customer_id=body.customer_id)
+    logger.info("retrieving customer", customer_id=str(body.customer_id))
 
     existing_customer = await customer_repository.load_customer_with_id(
         body.customer_id
@@ -86,7 +88,7 @@ async def create_account(
         )
     )
     if existing_account:
-        logger.info("account already exists", address_id=existing_account[0].id)
+        logger.info("account already exists", address_id=str(existing_account[0].id))
         raise exceptions.AlreadyExistsError("account already exists")
 
     account = Account(
@@ -117,7 +119,7 @@ async def deposit(
     account_id: UUID,
     body: BalanceUpdate,
 ) -> AccountResponse:
-    logger.info("depositing amount", account_id=account_id, amount=body.amount)
+    logger.info("depositing amount", account_id=str(account_id), amount=body.amount)
 
     account = await repository.load_account_with_id(account_id)
     if not account:
@@ -127,7 +129,7 @@ async def deposit(
     account.increase_balance(body.amount)
 
     logger.info(
-        "balance updated", account_id=account_id, balance=account.account_balance
+        "balance updated", account_id=str(account_id), balance=account.account_balance
     )
     await repository.save_account(account)
 
@@ -146,7 +148,7 @@ async def withdraw(
     account_id: UUID,
     body: BalanceUpdate,
 ) -> AccountResponse:
-    logger.info("withdrawing amount", account_id=account_id, amount=body.amount)
+    logger.info("withdrawing amount", account_id=str(account_id), amount=body.amount)
 
     account = await repository.load_account_with_id(account_id)
     if not account:
@@ -187,7 +189,9 @@ async def transfer(
     account_2 = await repository.load_account_with_id(body.account_id)
     if not account or not account_2:
         logger.info(
-            "account not found", account_id1=account_id, account_id2=body.account_id
+            "account not found",
+            account_id1=str(account_id),
+            account_id2=body.account_id,
         )
         raise exceptions.NotFoundError("account not found")
 
@@ -195,7 +199,9 @@ async def transfer(
         account.decrease_balance(body.amount)
         await repository.save_account(account)
         logger.info(
-            "balance updated", account_id=account_id, balance=account.account_balance
+            "balance updated",
+            account_id=str(account_id),
+            balance=account.account_balance,
         )
     except ValueError as e:
         logger.error(
@@ -208,8 +214,11 @@ async def transfer(
 
     account_2.increase_balance(body.amount)
     await repository.save_account(account_2)
+
     logger.info(
-        "balance updated", account_id=account_2.id, balance=account_2.account_balance
+        "balance updated",
+        account_id=str(account_2.id),
+        balance=account_2.account_balance,
     )
 
     return [

@@ -50,10 +50,10 @@ class UpdateAddress(BaseModel):
 
 class CreateAddress(BaseModel):
     customer_id: UUID
-    building_name: str | None
+    building_name: str | None = None
     building_number: str
     street: str
     town: str
     post_code: str
-    county: str | None
+    county: str | None = None
     country: str

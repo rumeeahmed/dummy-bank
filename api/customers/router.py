@@ -66,7 +66,7 @@ async def get_customer_by_id(
     customer = await repository.load_customer_with_id(customer_id)
 
     if not customer:
-        logger.info("customer not found", customer_id=customer_id)
+        logger.info("customer not found", customer_id=str(customer_id))
         raise exceptions.NotFoundError("customer not found")
 
     return CustomerResponse.model_validate(customer)
@@ -119,7 +119,7 @@ async def update_application(
     existing_customer = await repository.load_customer_with_id(customer_id)
 
     if existing_customer is None:
-        logger.info("customer not find", customer_id=customer_id)
+        logger.info("customer not find", customer_id=str(customer_id))
         raise exceptions.NotFoundError("customer not found")
 
     to_update = body.model_dump(exclude_unset=True)
@@ -141,7 +141,7 @@ async def update_application(
 
     await repository.save_customer(existing_customer)
     logger.info(
-        "customer updated", customer_id=existing_customer.id, to_update=to_update
+        "customer updated", customer_id=str(existing_customer.id), to_update=to_update
     )
 
     return CustomerResponse.model_validate(existing_customer)

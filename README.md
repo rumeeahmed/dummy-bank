@@ -46,19 +46,23 @@ Google API.
    GOOGLE_API_URL=https://maps.googleapis.com
    GOOGLE_API_KEY=API_KEY
    ```
-4. Run docker:
+4. For geolocation data a Google API key is needed. Produce one
+   through [here](https://developers.google.com/maps/documentation/geocoding/get-api-key).
+
+
+5. Run docker containers needed for the application:
    ```sh
    just up
    ```
-5. Make the local db migration:
+6. Make the local db migration:
    ```sh
    just db-upgrade
    ```
-6. Run the application:
-   ```shell
-      just run_api
+7. Run the application:
+   ```sh
+   just run_api
    ```
-7. API documentation available at `http://localhost:8080/docs`
+8. API documentation available at `http://localhost:8080/docs`
 after running the app.
 
 ## Testing

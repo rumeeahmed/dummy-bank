@@ -78,14 +78,14 @@ async def create_address(
     )
 
     if not existing_customer:
-        logger.info("customer not found", customer_id=body.customer_id)
+        logger.info("customer not found", customer_id=str(body.customer_id))
         raise exceptions.NotFoundError("customer not found")
 
     existing_addresses = await addresses_repository.load_address(
         SearchCondition(customer_id=body.customer_id, post_code=body.post_code)
     )
     if existing_addresses:
-        logger.info("address already exists", address_id=existing_addresses[0].id)
+        logger.info("address already exists", address_id=str(existing_addresses[0].id))
         raise exceptions.AlreadyExistsError("address already exists")
 
     address = Address(
@@ -115,7 +115,7 @@ async def create_address(
         logger.error("error retrieving coordinates", error=str(e))
 
     await addresses_repository.save_address(address)
-    logger.info("address created", address_id=address.id)
+    logger.info("address created", address_id=str(address.id))
 
     return AddressResponse.model_validate(address)
 
@@ -136,7 +136,7 @@ async def update_address(
     existing = await addresses_repository.load_address_with_id(id=address_id)
 
     if not existing:
-        logger.info("address not found", address_id=address_id)
+        logger.info("address not found", address_id=str(address_id))
         raise exceptions.NotFoundError("address not found")
 
     to_update = body.model_dump(exclude_unset=True)
@@ -172,7 +172,7 @@ async def update_address(
     except Exception as e:
         logger.error("error retrieving coordinates", error=str(e))
 
-    logger.info("address updated", address_id=address_id, to_update=to_update)
+    logger.info("address updated", address_id=str(address_id), to_update=to_update)
 
     await addresses_repository.save_address(existing)
     return AddressResponse.model_validate(existing)
