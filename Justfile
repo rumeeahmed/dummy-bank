@@ -1,6 +1,3 @@
-export GOOGLE_API_URL := "https://maps.dummy.com"
-export GOOGLE_API_KEY := "dummy_key"
-export DB_PORT := "5432"
 local_db_host := "127.0.0.1"
 local_db_user := "service"
 local_db_pass := "service"
@@ -30,26 +27,14 @@ lint:
       poetry run mypy .
 
 pytest +args="":
-    export DB_HOST="{{ local_db_host }}" && \
-    export DB_USER="{{ local_db_user }}" && \
-    export DB_PASS="{{ local_db_pass }}" && \
-    export DB_NAME="{{ local_db_name }}" && \
     poetry run python -m pytest {{args}}
 
 pytest-verbose:
-    export DB_HOST="{{ local_db_host }}" && \
-    export DB_USER="{{ local_db_user }}" && \
-    export DB_PASS="{{ local_db_pass }}" && \
-    export DB_NAME="{{ local_db_name }}" && \
     poetry run python -m pytest -vvv
 
 test: clean format lint coverage
 
 coverage:
-    export DB_HOST="{{ local_db_host }}" && \
-    export DB_USER="{{ local_db_user }}" && \
-    export DB_PASS="{{ local_db_pass }}" && \
-    export DB_NAME="{{ local_db_name }}" && \
     poetry run coverage run -m pytest tests && \
     poetry run coverage report && \
     poetry run coverage html
@@ -101,8 +86,4 @@ db-new-migration name:
 run_api:
     cd "{{ justfile_directory() }}" && \
       PYTHONPATH={{ justfile_directory() }} \
-        export DB_HOST="{{ local_db_host }}" && \
-        export DB_USER="{{ local_db_user }}" && \
-        export DB_PASS="{{ local_db_pass }}" && \
-        export DB_NAME="{{ local_db_name }}" && \
         poetry run python api/main.py
