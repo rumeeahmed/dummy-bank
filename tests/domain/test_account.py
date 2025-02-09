@@ -193,6 +193,11 @@ class TestBalance:
         with pytest.raises(ValueError):
             account.decrease_balance(5.67)
 
+    def test_is_not_new(self, make_account: Callable[..., Account]) -> None:
+        value = 100
+        account = make_account(account_balance=value, is_new=False)
+        assert account.account_balance == value
+
 
 class TestFromRecord:
     def test(self) -> None:

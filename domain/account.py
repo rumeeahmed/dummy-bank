@@ -1,4 +1,5 @@
 from datetime import datetime
+from decimal import Decimal
 from typing import Any, Self
 from uuid import UUID
 
@@ -24,8 +25,13 @@ class Account:
         self.updated_at = updated_at
         self._account_type = account_type
         self._account_number = account_number
-        self._account_balance = account_balance * 100 if is_new else account_balance
         self._customer_id = customer_id
+        # if not new, the value will already be normalised in the db.
+        self._account_balance = (
+            int((Decimal(account_balance) * 100).quantize(Decimal("1")))
+            if is_new
+            else account_balance
+        )
 
     @property
     def created_at(self) -> datetime | None:
@@ -60,11 +66,11 @@ class Account:
 
     @validate_call
     def increase_balance(self, amount: NonNegativeFloat) -> None:
-        self._account_balance += int(amount * 100)
+        self._account_balance += int((Decimal(amount) * 100).quantize(Decimal("1")))
 
     @validate_call
     def decrease_balance(self, amount: NonNegativeFloat) -> None:
-        cents = int(amount * 100)
+        cents = int((Decimal(amount) * 100).quantize(Decimal("1")))
         if self._account_balance < cents:
             raise ValueError("insufficient funds for this transaction")
 

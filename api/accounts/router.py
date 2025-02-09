@@ -77,7 +77,7 @@ async def create_account(
     )
 
     if not existing_customer:
-        logger.info("customer not found", customer_id=body.customer_id)
+        logger.info("customer not found", customer_id=str(body.customer_id))
         raise exceptions.NotFoundError("customer not found")
 
     existing_account = await account_repository.load_account(
@@ -101,7 +101,7 @@ async def create_account(
         updated_at=None,
     )
 
-    logger.info("saving account", account_id=account.id)
+    logger.info("saving account", account_id=str(account.id))
 
     await account_repository.save_account(account)
     return AccountResponse.model_validate(account)
