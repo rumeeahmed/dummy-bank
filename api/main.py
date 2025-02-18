@@ -17,6 +17,7 @@ from api.exception_handlers import (
     handle_invalid_request_error,
     handle_not_found_error,
 )
+from api.lock_manager import LockManager
 from api.settings import Settings
 
 
@@ -24,6 +25,7 @@ class State(TypedDict):
     _logger: structlog.stdlib.BoundLogger
     _settings: Settings
     _database_engine: AsyncEngine
+    _lock_manager: LockManager
 
 
 def create_app(settings: Settings, logger: structlog.stdlib.BoundLogger) -> FastAPI:
@@ -34,6 +36,7 @@ def create_app(settings: Settings, logger: structlog.stdlib.BoundLogger) -> Fast
             "_settings": settings,
             "_logger": logger,
             "_database_engine": engine,
+            "_lock_manager": LockManager(),
         }
         await engine.dispose()
 

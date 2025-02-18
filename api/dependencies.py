@@ -12,6 +12,7 @@ from repository import (
     Repository,
 )
 
+from .lock_manager import LockManager
 from .settings import Settings
 
 
@@ -51,6 +52,10 @@ def get_address_repository(
     yield AddressesRepository(engine=engine)
 
 
+def get_lock_manager(request: Request) -> Settings:
+    return request.state._lock_manager
+
+
 SettingsDep = Annotated[Settings, Depends(get_settings)]
 LoggerDep = Annotated[structlog.stdlib.BoundLogger, Depends(get_logger)]
 DatabaseEngineDep = Annotated[AsyncEngine, Depends(get_database_engine)]
@@ -58,3 +63,4 @@ RepositoryDep = Annotated[Repository, Depends(get_repository)]
 CustomerRepositoryDep = Annotated[CustomerRepository, Depends(get_customer_repository)]
 AccountRepositoryDep = Annotated[AccountsRepository, Depends(get_account_repository)]
 AddressesRepositoryDep = Annotated[AddressesRepository, Depends(get_address_repository)]
+LockManagerDep = Annotated[LockManager, Depends(get_lock_manager)]

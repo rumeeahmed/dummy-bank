@@ -1,5 +1,6 @@
 import os
-from typing import AsyncIterator
+import uuid
+from typing import Any, AsyncIterator, Generator
 
 import pytest
 import structlog
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.pool import NullPool
 from structlog.stdlib import BoundLogger
 
+from api.lock_manager import LockManager
 from api.settings import Settings
 from lib.geolocation_client import GoogleMapsClient
 from lib.http_client import BaseHTTPClient
@@ -94,6 +96,16 @@ def google_maps_url() -> str:
 @pytest.fixture()
 def google_maps_api_key() -> str:
     return "dummy_secret"
+
+
+@pytest.fixture()
+def lock_manager() -> Generator[LockManager, Any, None]:
+    yield LockManager()
+
+
+@pytest.fixture()
+def lock_id() -> uuid.UUID:
+    return uuid.uuid4()
 
 
 @pytest.fixture()
