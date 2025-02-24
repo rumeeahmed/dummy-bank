@@ -3,7 +3,12 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, status
 
 from api import exceptions
-from api.dependencies import AccountRepositoryDep, CustomerRepositoryDep, LoggerDep
+from api.dependencies import (
+    AccountRepositoryDep,
+    CustomerRepositoryDep,
+    LockManagerDep,
+    LoggerDep,
+)
 from domain import Account
 from repository import SearchCondition
 
@@ -143,34 +148,40 @@ async def deposit(
     summary="Withdraw money from Account",
 )
 async def withdraw(
-    logger: LoggerDep,
     repository: AccountRepositoryDep,
+    logger: LoggerDep,
     account_id: UUID,
     body: BalanceUpdate,
+    lock_manager: LockManagerDep,
 ) -> AccountResponse:
     logger.info("withdrawing amount", account_id=str(account_id), amount=body.amount)
 
-    account = await repository.load_account_with_id(account_id)
-    if not account:
-        logger.info("account not found", account_id=account_id)
-        raise exceptions.NotFoundError("account not found")
+    async with lock_manager.lock(account_id):
+        account = await repository.load_account_with_id(account_id)
+        if not account:
+            logger.info("account not found", account_id=account_id)
+            raise exceptions.NotFoundError("account not found")
 
-    try:
-        account.decrease_balance(body.amount)
-        logger.info(
-            "balance updated", account_id=account_id, balance=account.account_balance
-        )
-        await repository.save_account(account)
-    except ValueError as e:
-        logger.error(
-            "failed to deposit money",
-            account_id=account_id,
-            amount=body.amount,
-            error=str(e),
-        )
-        raise exceptions.InvalidRequestError(str(e))
+        try:
+            current_balance = account.account_balance
+            account.decrease_balance(body.amount)
+            logger.info(
+                "balance updated",
+                account_id=account_id,
+                previous_balance=current_balance,
+                new_balance=account.account_balance,
+            )
+            await repository.save_account(account)
+        except ValueError as e:
+            logger.error(
+                "failed to withdraw money",
+                account_id=account_id,
+                amount=body.amount,
+                error=str(e),
+            )
+            raise exceptions.InvalidRequestError(str(e))
 
-    return AccountResponse.model_validate(account)
+        return AccountResponse.model_validate(account)
 
 
 @router.post(

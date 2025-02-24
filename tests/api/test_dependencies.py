@@ -56,7 +56,7 @@ class TestGetLockManager:
     def test(self) -> None:
         app = create_app(Settings(), Mock())
 
-        lock_manager = Mock(spec=LockManager)
+        lock_manager = LockManager()
 
         def override_get_lock_manager(request: Request) -> LockManager:
             return lock_manager
