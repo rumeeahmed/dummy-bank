@@ -204,7 +204,6 @@ class TestDecreaseBalance:
             )
             assert response.status_code == 422
 
-    @pytest.mark.wip
     @pytest.mark.asyncio
     async def test_multiple_requests(
         self,
