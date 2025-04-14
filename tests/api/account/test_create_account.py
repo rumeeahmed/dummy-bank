@@ -6,9 +6,6 @@ import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from api.dependencies import get_account_repository, get_customer_repository
-from api.main import create_app
-from api.settings import Settings
 from domain import Account, Customer
 from repository import AccountsRepository, CustomerRepository
 
@@ -20,6 +17,7 @@ class TestCreateAccount:
     async def test(
         self,
         mock_uuid: Mock,
+        test_client: TestClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
         make_customer: Callable[..., Customer],
@@ -47,28 +45,14 @@ class TestCreateAccount:
             "updated_at": "2018-11-13T15:16:08Z",
         }
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/accounts", json=payload)
-            assert response.status_code == 201
-            assert response.json() == expected_payload
+        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        assert response.status_code == 201
+        assert response.json() == expected_payload
 
     @pytest.mark.asyncio
     async def test_address_already_exists(
         self,
+        test_client: TestClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
         make_customer: Callable[..., Customer],
@@ -88,57 +72,21 @@ class TestCreateAccount:
             "initial_balance": 100,
             "customer_id": str(customer.id),
         }
-
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/accounts", json=payload)
-            assert response.status_code == 409
-            assert response.json() == {"detail": "account already exists"}
+        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        assert response.status_code == 409
+        assert response.json() == {"detail": "account already exists"}
 
     @pytest.mark.asyncio
-    async def test_missing_customer(
-        self,
-        customer_repository: CustomerRepository,
-        account_repository: AccountsRepository,
-    ) -> None:
+    async def test_missing_customer(self, test_client: TestClient) -> None:
         payload = {
             "account_type": "debit",
             "account_number": "1234567890",
             "initial_balance": 100,
             "customer_id": "23fd1b92-4463-4659-913b-49ef7e4d48b9",
         }
-
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/accounts", json=payload)
-            assert response.status_code == 404
-            assert response.json() == {"detail": "customer not found"}
+        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        assert response.status_code == 404
+        assert response.json() == {"detail": "customer not found"}
 
     @pytest.mark.parametrize(
         argnames=["field", "value"],
@@ -157,7 +105,10 @@ class TestCreateAccount:
     )
     @pytest.mark.asyncio
     async def test_bad_payload(
-        self, customer_repository: CustomerRepository, field: str, value: Any
+        self,
+        test_client: TestClient,
+        field: str,
+        value: Any,
     ) -> None:
         payload = {
             "account_type": "debit",
@@ -171,14 +122,5 @@ class TestCreateAccount:
         else:
             payload[field] = value
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/accounts", json=payload)
-            assert response.status_code == 422
+        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        assert response.status_code == 422
