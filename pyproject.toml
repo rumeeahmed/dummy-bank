@@ -10,12 +10,12 @@ python = "^3.13"
 asyncpg = "^0.30.0"
 email-validator = "^2.1.2"
 sqlalchemy = { extras = ["asyncio"], version = "^2.0.37" }
-pydantic = "^2.10.6"
-pydantic-settings = "^2.7.1"
-uvicorn = "^0.34.0"
+pydantic = "^2.11.4"
+pydantic-settings = "^2.9.1"
+uvicorn = "^0.34.2"
 fastapi = "^0.115.7"
 pyjwt = "^2.10.1"
-structlog = "^25.1.0"
+structlog = "^25.3.0"
 
 
 [tool.poetry.group.dev.dependencies]

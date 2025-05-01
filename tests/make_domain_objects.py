@@ -7,7 +7,7 @@ from domain import Account, Address, Customer
 
 
 @pytest.fixture()
-def make_customer(**kw: Any) -> Callable[..., Customer]:
+def make_customer() -> Callable[..., Customer]:
     def _make_customer(**kw: Any) -> Customer:
         kwargs: dict = {
             "id": uuid4(),
@@ -25,7 +25,7 @@ def make_customer(**kw: Any) -> Callable[..., Customer]:
 
 
 @pytest.fixture()
-def make_account(**kw: Any) -> Callable[..., Account]:
+def make_account() -> Callable[..., Account]:
     def _make_account(**kw: Any) -> Account:
         kwargs: dict = {
             "id": uuid4(),
@@ -42,7 +42,7 @@ def make_account(**kw: Any) -> Callable[..., Account]:
 
 
 @pytest.fixture()
-def make_address(**kw: Any) -> Callable[..., Address]:
+def make_address() -> Callable[..., Address]:
     def _make_address(**kw: Any) -> Address:
         kwargs: dict = {
             "id": uuid4(),
