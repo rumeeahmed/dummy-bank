@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Generic, TypeVar
 from uuid import UUID
 
 from pydantic import (
@@ -9,10 +8,8 @@ from pydantic import (
     NonNegativeInt,
 )
 
-T = TypeVar("T")
 
-
-class PaginatedResponse(BaseModel, Generic[T]):
+class PaginatedResponse[T](BaseModel):
     results: list[T]
     page: int
     page_size: int

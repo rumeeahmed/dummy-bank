@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncIterator, TypedDict
+from typing import AsyncGenerator, TypedDict
 
 import structlog
 import uvicorn
@@ -30,7 +30,7 @@ class State(TypedDict):
 
 def create_app(settings: Settings, logger: structlog.stdlib.BoundLogger) -> FastAPI:
     @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncIterator[State]:
+    async def lifespan(app: FastAPI) -> AsyncGenerator[State, None]:
         engine = create_async_engine(settings.database_url())
         yield {
             "_settings": settings,

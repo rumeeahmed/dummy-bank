@@ -42,7 +42,7 @@ async def list_customers(
         page=paginated_customers["page"],
     )
 
-    return PaginatedResponse[CustomerResponse](
+    return PaginatedResponse[CustomerResponse, int](
         results=[
             CustomerResponse.model_validate(customer)
             for customer in paginated_customers["results"]
