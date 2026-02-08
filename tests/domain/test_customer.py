@@ -4,8 +4,8 @@ from uuid import UUID, uuid4
 
 import pytest
 
-from domain import Customer
-from repository import DBCustomer
+from dummy_bank.domain import Customer
+from dummy_bank.repository import DBCustomer
 
 
 class TestID:
@@ -19,7 +19,7 @@ class TestID:
         customer = make_customer(id=value)
 
         with pytest.raises(AttributeError):
-            customer.id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+            setattr(customer, "id", UUID("c668e0af-d1b9-412f-a1da-790e5905da26"))
 
 
 class TestCreatedAt:

@@ -1,13 +1,17 @@
 import logging
+from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy import URL
 
-from lib.geolocation_client import GoogleMapsClient
+from dummy_bank.lib.geolocation_client import GoogleMapsClient
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
+
+    def __init__(self, **values: Any) -> None:
+        super().__init__(**values)
 
     API_PORT: int = 8080
     API_HOST: str = "0.0.0.0"

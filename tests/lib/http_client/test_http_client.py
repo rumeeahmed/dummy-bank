@@ -3,7 +3,7 @@ import io
 import pytest
 from pytest_httpx import HTTPXMock
 
-from lib.http_client import BaseHTTPClient
+from dummy_bank.lib.http_client import BaseHTTPClient
 
 
 class TestGet:

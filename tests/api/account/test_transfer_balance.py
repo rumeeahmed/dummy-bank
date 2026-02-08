@@ -1,21 +1,22 @@
 import uuid
 from typing import Any, Callable
-from unittest.mock import Mock
 
 import pytest
+from fastapi import FastAPI
 from fastapi.testclient import TestClient
+from httpx import ASGITransport, AsyncClient
+from structlog.stdlib import BoundLogger
 
-from api.dependencies import get_account_repository, get_customer_repository
-from api.main import create_app
-from api.settings import Settings
-from domain import Account, Customer
-from repository import AccountsRepository, CustomerRepository
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.domain import Account, Customer
+from dummy_bank.repository import AccountsRepository, CustomerRepository
 
 
 class TestAccountNotFound:
     @pytest.mark.asyncio
     async def test_account_1_not_found(
         self,
+        test_client: TestClient,
         customer_repository: CustomerRepository,
         make_customer: Callable[..., Customer],
         account_repository: AccountsRepository,
@@ -29,30 +30,16 @@ class TestAccountNotFound:
 
         payload = {"account_id": str(account_2.id), "amount": 100}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = test_client.post(
+            f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
         )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post(
-                f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
-            )
-            assert response.status_code == 404
-            assert response.json() == {"detail": "account not found"}
+        assert response.status_code == 404
+        assert response.json() == {"detail": "account not found"}
 
     @pytest.mark.asyncio
     async def test_account_2_not_found(
         self,
+        test_client: TestClient,
         customer_repository: CustomerRepository,
         make_customer: Callable[..., Customer],
         account_repository: AccountsRepository,
@@ -66,63 +53,30 @@ class TestAccountNotFound:
 
         payload = {"account_id": str(uuid.uuid4()), "amount": 100}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = test_client.post(
+            f"/dummy-bank/v1/accounts/{account_1.id}/transfer", json=payload
         )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post(
-                f"/dummy-bank/v1/accounts/{account_1.id}/transfer", json=payload
-            )
-            assert response.status_code == 404
-            assert response.json() == {"detail": "account not found"}
+        assert response.status_code == 404
+        assert response.json() == {"detail": "account not found"}
 
     @pytest.mark.asyncio
     async def test_customer_both_customers_not_found(
-        self,
-        customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
-        account_repository: AccountsRepository,
-        make_account: Callable[..., Account],
+        self, test_client: TestClient
     ) -> None:
         payload = {"amount": 102.99, "account_id": str(uuid.uuid4())}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = test_client.post(
+            f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
         )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post(
-                f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
-            )
-            assert response.status_code == 404
-            assert response.json() == {"detail": "account not found"}
+        assert response.status_code == 404
+        assert response.json() == {"detail": "account not found"}
 
 
 class TestTransferBalance:
     @pytest.mark.asyncio
     async def test(
         self,
+        test_client: TestClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
         make_customer: Callable[..., Customer],
@@ -139,31 +93,17 @@ class TestTransferBalance:
 
         payload = {"amount": 7.87, "account_id": str(account_2.id)}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = test_client.post(
+            f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
         )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post(
-                f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
-            )
-            assert response.status_code == 200
-            assert response.json()[0]["account_balance"] == 9263
-            assert response.json()[1]["account_balance"] == 10214
+        assert response.status_code == 200
+        assert response.json()[0]["account_balance"] == 9263
+        assert response.json()[1]["account_balance"] == 10214
 
     @pytest.mark.asyncio
     async def test_transfer_more_than_balance(
         self,
+        test_client: TestClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
         make_customer: Callable[..., Customer],
@@ -180,28 +120,11 @@ class TestTransferBalance:
 
         payload = {"amount": 1000, "account_id": str(account_2.id)}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_account_repository() -> AccountsRepository:
-            return account_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = test_client.post(
+            f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
         )
-        app.dependency_overrides[get_account_repository] = (
-            override_get_account_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post(
-                f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
-            )
-            assert response.status_code == 400
-            assert (
-                response.json()["detail"] == "insufficient funds for this transaction"
-            )
+        assert response.status_code == 400
+        assert response.json()["detail"] == "insufficient funds for this transaction"
 
     @pytest.mark.parametrize(
         argnames=["field", "value"],
@@ -213,7 +136,11 @@ class TestTransferBalance:
     )
     @pytest.mark.asyncio
     async def test_bad_payload(
-        self, customer_repository: CustomerRepository, field: str, value: Any
+        self,
+        test_client: TestClient,
+        customer_repository: CustomerRepository,
+        field: str,
+        value: Any,
     ) -> None:
         payload: dict = {}
 
@@ -222,16 +149,46 @@ class TestTransferBalance:
         else:
             payload[field] = value
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = test_client.post(
+            f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
         )
+        assert response.status_code == 422
 
-        with TestClient(app) as client:
-            response = client.post(
-                f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
+    @pytest.mark.asyncio
+    async def test_multiple_requests(
+        self,
+        app: FastAPI,
+        customer_repository: CustomerRepository,
+        account_repository: AccountsRepository,
+        make_customer: Callable[..., Customer],
+        make_account: Callable[..., Account],
+        logger: BoundLogger,
+        lock_manager: LockManager,
+    ) -> None:
+        customer = make_customer()
+        await customer_repository.save_customer(customer)
+
+        account = make_account(account_balance=1000, customer_id=customer.id)
+        await account_repository.save_account(account)
+
+        account_2 = make_account(customer_id=customer.id, account_balance=0)
+        await account_repository.save_account(account_2)
+
+        payload = {"amount": 100, "account_id": str(account_2.id)}
+
+        async with AsyncClient(
+            transport=ASGITransport(app=app), base_url="http://test"
+        ) as client:
+            for i in range(10):
+                response = await client.post(
+                    f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
+                )
+                assert response.status_code == 200
+
+            response = await client.get(
+                "/dummy-bank/v1/accounts", params={"customer_id": str(customer.id)}
             )
-            assert response.status_code == 422
+            response_json = response.json()
+
+            assert response_json["results"][0]["account_balance"] == 0
+            assert response_json["results"][1]["account_balance"] == 100000

@@ -11,40 +11,40 @@ clean:
     find . -type d -name __pycache__ -exec rm -r {} \+
 
 wip:
-    cd "{{ justfile_directory() }}" && poetry run python -m pytest tests -m wip -vv
+    cd "{{ justfile_directory() }}" && uv run python -m pytest tests -m wip -vv
 
 # Run formatting
 format:
     cd "{{ justfile_directory() }}" && \
-      poetry run ruff format . && \
-      poetry run ruff check . --fix --select I --select F401
+      uv run ruff format . && \
+      uv run ruff check . --fix --select I --select F401
 
 # Lint
 lint:
     cd "{{ justfile_directory() }}" && \
-      poetry run ruff format --check . && \
-      poetry run ruff check . && \
-      poetry run mypy .
+      uv run ruff format --check . && \
+      uv run ruff check . && \
+      uv run ty check .
 
 pytest +args="":
-    poetry run python -m pytest {{args}}
+    uv run python -m pytest {{args}}
 
 pytest-verbose:
-    poetry run python -m pytest -vvv
+    uv run python -m pytest -vvv
 
 test: clean format lint coverage
 
 coverage:
-    poetry run coverage run -m pytest tests && \
-    poetry run coverage report && \
-    poetry run coverage html
+    uv run coverage run -m pytest tests && \
+    uv run coverage report && \
+    uv run coverage html
 
 coverage_report:
-    poetry run coverage html
+    uv run coverage html
 
 # Install deps
 install:
-    cd "{{ justfile_directory() }}" && poetry install --no-interaction --no-root
+    cd "{{ justfile_directory() }}" && uv sync
 
 # Run postgres
 up:
@@ -58,7 +58,7 @@ down:
 db-version:
     cd "{{ justfile_directory() }}" && \
       PYTHONPATH={{ justfile_directory() }} \
-      poetry run python -m alembic current
+      uv run python -m alembic current
 
 db-upgrade:
     cd "{{ justfile_directory() }}" && \
@@ -68,22 +68,22 @@ db-upgrade:
         export DB_PASS="{{ local_db_pass }}" && \
         export DB_NAME="{{ local_db_name }}" && \
         echo "DB_USER: $DB_USER, DB_HOST: $DB_HOST, DB_NAME: $DB_NAME" && \
-        poetry run python -m alembic upgrade head
+        uv run python -m alembic upgrade head
 
 # Downgrade to the specified database migration
 db-downgrade revision:
     cd "{{ justfile_directory() }}" && \
       PYTHONPATH={{ justfile_directory() }} \
-      poetry run python -m alembic downgrade {{ revision }}
+      uv run python -m alembic downgrade {{ revision }}
 
 # Downgrade to the specified database migration
 db-new-migration name:
     cd "{{ justfile_directory() }}" && \
       PYTHONPATH={{ justfile_directory() }} \
-      poetry run python -m alembic revision -m "{{ name }}"
+      uv run python -m alembic revision -m "{{ name }}"
 
 
 run_api:
     cd "{{ justfile_directory() }}" && \
       PYTHONPATH={{ justfile_directory() }} \
-        poetry run python api/main.py
+        uv run python api/main.py

@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 
-from api.main import Settings
-from repository import Base
+from dummy_bank.api.settings import Settings
+from dummy_bank.repository import Base
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

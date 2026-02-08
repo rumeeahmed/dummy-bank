@@ -6,8 +6,8 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
-from domain import Account
-from repository import DBAccount
+from dummy_bank.domain import Account
+from dummy_bank.repository import DBAccount
 
 
 class TestID:
@@ -21,7 +21,7 @@ class TestID:
         account = make_account(id=value)
 
         with pytest.raises(AttributeError):
-            account.id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+            setattr(account, "id", UUID("c668e0af-d1b9-412f-a1da-790e5905da26"))
 
 
 class TestCustomerID:
@@ -35,7 +35,9 @@ class TestCustomerID:
         account = make_account(customer_id=value)
 
         with pytest.raises(AttributeError):
-            account.customer_id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+            setattr(
+                account, "customer_id", UUID("c668e0af-d1b9-412f-a1da-790e5905da26")
+            )
 
 
 class TestCreatedAt:
@@ -95,7 +97,7 @@ class TestAccountNumber:
         account = make_account(account_number=value)
 
         with pytest.raises(AttributeError):
-            account.account_number = "12334"  # type: ignore[misc]
+            setattr(account, "account_number", "12334")
 
 
 class TestAccountType:
@@ -109,7 +111,7 @@ class TestAccountType:
         account = make_account(account_type=value)
 
         with pytest.raises(AttributeError):
-            account.account_type = "debit"  # type: ignore[misc]
+            setattr(account, "account_type", "debit")
 
 
 class TestBalance:
@@ -135,7 +137,7 @@ class TestBalance:
         account = make_account(account_balance=value)
 
         with pytest.raises(AttributeError):
-            account.account_balance = 1  # type: ignore[misc]
+            setattr(account, "account_balance", 1234)
 
     def test_increase_account_balance(
         self, make_account: Callable[..., Account]

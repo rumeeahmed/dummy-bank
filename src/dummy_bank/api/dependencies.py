@@ -5,7 +5,7 @@ import structlog
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from repository import (
+from dummy_bank.repository import (
     AccountsRepository,
     AddressesRepository,
     CustomerRepository,

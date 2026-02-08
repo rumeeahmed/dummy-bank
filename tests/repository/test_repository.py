@@ -5,8 +5,8 @@ from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.pool import NullPool
 
-from repository import Repository
-from repository.db_customer import DBCustomer
+from dummy_bank.repository import Repository
+from dummy_bank.repository.db_customer import DBCustomer
 
 
 class TestRepositoryEngine:
@@ -18,7 +18,7 @@ class TestRepositoryEngine:
     def test_is_read_only(self) -> None:
         repository = Repository(engine=Mock(spec=AsyncEngine))
         with pytest.raises(AttributeError):
-            repository.engine = Mock(spec=AsyncEngine)  # type: ignore[misc]
+            setattr(repository, "engine", Mock(spec=AsyncEngine))
 
 
 class TestHealthCheck:

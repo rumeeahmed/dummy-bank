@@ -7,20 +7,20 @@ import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from api.dependencies import (
+from dummy_bank.api.dependencies import (
     get_address_repository,
     get_customer_repository,
 )
-from api.main import create_app
-from api.settings import Settings
-from domain import Address, Customer
-from lib.geolocation_client import Coordinates, GoogleMapsClient
-from repository import AddressesRepository, CustomerRepository
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
+from dummy_bank.domain import Address, Customer
+from dummy_bank.lib.geolocation_client import Coordinates, GoogleMapsClient
+from dummy_bank.repository import AddressesRepository, CustomerRepository
 
 
 class TestCreateAddress:
     @patch.object(GoogleMapsClient, "get_coordinates")
-    @patch("api.adresses.router.uuid4")
+    @patch("dummy_bank.api.adresses.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test(
@@ -133,7 +133,7 @@ class TestCreateAddress:
             assert response.json() == {"detail": "address already exists"}
 
     @patch.object(GoogleMapsClient, "get_coordinates")
-    @patch("api.adresses.router.uuid4")
+    @patch("dummy_bank.api.adresses.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test_bad_geolocation_request(

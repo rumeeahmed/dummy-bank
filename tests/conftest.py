@@ -1,22 +1,37 @@
 import os
 import uuid
 from typing import Any, AsyncIterator, Generator
+from unittest.mock import Mock
 
 import pytest
 import structlog
 from dotenv import load_dotenv
+from fastapi import FastAPI
 from psycopg import Connection
 from pytest_postgresql import factories
 from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 from sqlalchemy.pool import NullPool
+from starlette.testclient import TestClient
 from structlog.stdlib import BoundLogger
 
-from api.lock_manager import LockManager
-from api.settings import Settings
-from lib.geolocation_client import GoogleMapsClient
-from lib.http_client import BaseHTTPClient
-from repository import AccountsRepository, AddressesRepository, Base, CustomerRepository
+from dummy_bank.api.dependencies import (
+    get_account_repository,
+    get_customer_repository,
+    get_lock_manager,
+    get_logger,
+)
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
+from dummy_bank.lib.geolocation_client import GoogleMapsClient
+from dummy_bank.lib.http_client import BaseHTTPClient
+from dummy_bank.repository import (
+    AccountsRepository,
+    AddressesRepository,
+    Base,
+    CustomerRepository,
+)
 
 pytest_plugins = [
     "tests.make_domain_objects",
@@ -47,6 +62,41 @@ async def database_engine(postgresql: Connection) -> AsyncIterator[AsyncEngine]:
     yield engine
 
     await engine.dispose()
+
+
+@pytest.fixture
+def app(
+    customer_repository: CustomerRepository,
+    lock_manager: LockManager,
+    account_repository: AccountsRepository,
+    logger: BoundLogger,
+    settings: Settings,
+) -> FastAPI:
+    def override_get_customer_repository() -> CustomerRepository:
+        return customer_repository
+
+    def override_get_account_repository() -> AccountsRepository:
+        return account_repository
+
+    def override_get_lock_manager() -> LockManager:
+        return lock_manager
+
+    def override_get_logger() -> BoundLogger:
+        return logger
+
+    app = create_app(settings=Settings(), logger=Mock())
+    app.dependency_overrides[get_customer_repository] = override_get_customer_repository
+    app.dependency_overrides[get_account_repository] = override_get_account_repository
+    app.dependency_overrides[get_lock_manager] = override_get_lock_manager
+    app.dependency_overrides[get_logger] = override_get_logger
+
+    return app
+
+
+@pytest.fixture
+def test_client(app: FastAPI) -> Generator[TestClient, None, None]:
+    with TestClient(app) as client:
+        yield client
 
 
 @pytest.fixture(scope="session", autouse=True)

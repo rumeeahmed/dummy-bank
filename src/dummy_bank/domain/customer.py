@@ -40,8 +40,8 @@ class Customer:
         self._created_at = value
 
     @property
-    def email(self) -> EmailStr | None:
-        return self._email
+    def email(self) -> str | None:
+        return str(self._email) if self._email is not None else None
 
     @email.setter
     @validate_call

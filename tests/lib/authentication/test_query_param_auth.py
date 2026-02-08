@@ -1,7 +1,7 @@
 import pytest
 from httpx import URL, Request
 
-from lib.authentication.query_param_auth import QueryParamAuth
+from dummy_bank.lib.authentication.query_param_auth import QueryParamAuth
 
 
 class TestQueryParamAuth:

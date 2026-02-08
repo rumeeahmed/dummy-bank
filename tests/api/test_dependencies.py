@@ -5,7 +5,7 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from api.dependencies import (
+from dummy_bank.api.dependencies import (
     AccountRepositoryDep,
     AddressesRepositoryDep,
     CustomerRepositoryDep,
@@ -15,11 +15,10 @@ from api.dependencies import (
     RepositoryDep,
     SettingsDep,
     get_database_engine,
-    get_lock_manager,
 )
-from api.lock_manager import LockManager
-from api.main import create_app
-from api.settings import Settings
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
 
 
 class TestGetSettings:
@@ -56,16 +55,9 @@ class TestGetLockManager:
     def test(self) -> None:
         app = create_app(Settings(), Mock())
 
-        lock_manager = LockManager()
-
-        def override_get_lock_manager(request: Request) -> LockManager:
-            return lock_manager
-
-        app.dependency_overrides[get_lock_manager] = override_get_lock_manager
-
         @app.get("/test", status_code=204)
         def fn(lock_manager_dep: LockManagerDep) -> None:
-            assert lock_manager_dep == lock_manager
+            assert isinstance(lock_manager_dep, LockManager)
             return
 
         with TestClient(app) as client:

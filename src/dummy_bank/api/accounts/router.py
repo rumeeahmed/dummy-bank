@@ -2,15 +2,15 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 
-from api import exceptions
-from api.dependencies import (
+from dummy_bank.api import exceptions
+from dummy_bank.api.dependencies import (
     AccountRepositoryDep,
     CustomerRepositoryDep,
     LockManagerDep,
     LoggerDep,
 )
-from domain import Account
-from repository import SearchCondition
+from dummy_bank.domain import Account
+from dummy_bank.repository import SearchCondition
 
 from ..models import (
     AccountResponse,
@@ -195,6 +195,7 @@ async def transfer(
     repository: AccountRepositoryDep,
     account_id: UUID,
     body: BalanceTransfer,
+    lock_manager: LockManagerDep,
 ) -> list[AccountResponse]:
     account = await repository.load_account_with_id(account_id)
     account_2 = await repository.load_account_with_id(body.account_id)
@@ -206,24 +207,26 @@ async def transfer(
         )
         raise exceptions.NotFoundError("account not found")
 
-    try:
-        account.decrease_balance(body.amount)
-        await repository.save_account(account)
-        logger.info(
-            "balance updated",
-            account_id=str(account_id),
-            balance=account.account_balance,
-        )
-    except ValueError as e:
-        logger.error(
-            "failed to transfer money",
-            account_id=account_id,
-            amount=body.amount,
-            error=str(e),
-        )
-        raise exceptions.InvalidRequestError(str(e))
+    async with lock_manager.lock(account_id):
+        try:
+            account.decrease_balance(body.amount)
+            await repository.save_account(account)
+            logger.info(
+                "balance updated",
+                account_id=str(account_id),
+                balance=account.account_balance,
+            )
+        except ValueError as e:
+            logger.error(
+                "failed to transfer money",
+                account_id=account_id,
+                amount=body.amount,
+                error=str(e),
+            )
+            raise exceptions.InvalidRequestError(str(e))
 
-    account_2.increase_balance(body.amount)
+        account_2.increase_balance(body.amount)
+
     await repository.save_account(account_2)
 
     logger.info(

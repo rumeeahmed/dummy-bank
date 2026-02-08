@@ -1,8 +1,8 @@
 import pytest
 from pytest_httpx import HTTPXMock
 
-from lib.geolocation_client import GoogleMapsClient
-from lib.geolocation_client.models import Coordinates
+from dummy_bank.lib.geolocation_client import GoogleMapsClient
+from dummy_bank.lib.geolocation_client.models import Coordinates
 
 
 class TestGoogleMapsClient:

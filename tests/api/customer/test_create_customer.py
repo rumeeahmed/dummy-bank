@@ -6,11 +6,11 @@ import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from api.dependencies import get_customer_repository
-from api.main import create_app
-from api.settings import Settings
-from domain import Customer
-from repository import CustomerRepository
+from dummy_bank.api.dependencies import get_customer_repository
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
+from dummy_bank.domain import Customer
+from dummy_bank.repository import CustomerRepository
 
 
 class TestCustomerAlreadyExists:
@@ -46,7 +46,7 @@ class TestCustomerAlreadyExists:
 
 
 class TestCreateCustomer:
-    @patch("api.customers.router.uuid4")
+    @patch("dummy_bank.api.customers.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test(

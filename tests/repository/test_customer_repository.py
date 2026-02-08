@@ -6,8 +6,8 @@ import pytest
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 
-from domain import Customer
-from repository import CustomerRepository, SearchCondition
+from dummy_bank.domain import Customer
+from dummy_bank.repository import CustomerRepository, SearchCondition
 
 
 class TestLoadCustomerWithId:
