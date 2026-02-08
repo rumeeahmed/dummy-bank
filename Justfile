@@ -29,15 +29,27 @@ lint:
 pytest +args="":
     uv run python -m pytest {{args}}
 
+pytest-parallel workers="auto" +args="":
+    uv run python -m pytest -n {{workers}} --dist loadscope {{args}}
+
 pytest-verbose:
     uv run python -m pytest -vvv
 
-test: clean format lint coverage
+test: clean format lint coverage-parallel
 
 coverage:
     uv run coverage run -m pytest tests && \
     uv run coverage report && \
     uv run coverage html
+
+coverage-parallel workers="auto" +args="":
+    uv run python -m pytest \
+        -n {{workers}} \
+        --cov=src/dummy_bank \
+        --cov-report=term \
+        --cov-report=html \
+        --cov-fail-under=100 \
+        {{args}}
 
 coverage_report:
     uv run coverage html

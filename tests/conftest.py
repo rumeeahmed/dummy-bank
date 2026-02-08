@@ -37,10 +37,13 @@ pytest_plugins = [
     "tests.make_domain_objects",
 ]
 
+_PYTEST_WORKER = os.getenv("PYTEST_XDIST_WORKER", "master")
+_TEST_DB_NAME = f"dummy_bank_{_PYTEST_WORKER}"
+
 postgresql_in_docker = factories.postgresql_noproc(
-    port=5432, user="service", password="service", dbname="dummy_bank"
+    port=5432, user="service", password="service", dbname="postgres"
 )
-postgresql = factories.postgresql("postgresql_in_docker", dbname="dummy_bank")
+postgresql = factories.postgresql("postgresql_in_docker", dbname=_TEST_DB_NAME)
 
 
 @pytest.fixture
