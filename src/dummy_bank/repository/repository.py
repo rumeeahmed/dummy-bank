@@ -1,4 +1,4 @@
-from typing import Any, Literal, Type, final
+from typing import Any, Literal
 
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import (
@@ -17,7 +17,6 @@ class Repository:
         self._engine = engine
 
     @property
-    @final
     def engine(self) -> AsyncEngine | AsyncConnection:
         return self._engine
 
@@ -36,7 +35,7 @@ class Repository:
     def _session(self) -> AsyncSession:
         return async_sessionmaker(self.engine)()
 
-    async def get_count(self, model: Type[DeclarativeBase], **kwargs: Any) -> int:
+    async def get_count(self, model: type[DeclarativeBase], **kwargs: Any) -> int:
         async with self._session() as session:
             stmt = select(func.count()).select_from(model)
 

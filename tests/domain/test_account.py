@@ -5,6 +5,7 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
+from dummy_bank.domain import Account
 from dummy_bank.repository import DBAccount
 
 from ..make_domain_objects import MakeAccount

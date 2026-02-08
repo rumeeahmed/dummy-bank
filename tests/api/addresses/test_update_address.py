@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, cast
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -59,7 +59,7 @@ class TestUpdateField:
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
-        existing = make_address(**{field: original}, customer_id=customer.id)  # ty:ignore[invalid-argument-type]
+        existing = make_address(**cast(Any, {field: original}), customer_id=customer.id)
         await addresses_repository.save_address(existing)
         assert getattr(existing, field) == original
 

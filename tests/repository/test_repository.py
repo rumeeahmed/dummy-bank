@@ -29,6 +29,13 @@ class TestHealthCheck:
         assert response == "ok"
 
     @pytest.mark.asyncio
+    async def test_healthy_with_connection(self, database_engine: AsyncEngine) -> None:
+        async with database_engine.connect() as conn:
+            repository = Repository(engine=conn)
+            response = await repository.health_check()
+            assert response == "ok"
+
+    @pytest.mark.asyncio
     async def test_unhealthy(self) -> None:
         url = URL.create(
             "postgresql+asyncpg",

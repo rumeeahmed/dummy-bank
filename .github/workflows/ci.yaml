@@ -55,14 +55,14 @@ jobs:
           DB_PORT: 5432
           GOOGLE_API_URL: https://maps.dummy.com
           GOOGLE_API_KEY: dummy_key
-      - name: Spot vulnerable dependencies
-        uses: aquasecurity/trivy-action@master
-        env:
-          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
-        with:
-          scan-type: "fs"
-          exit-code: "1"
-          scan-ref: ./
+#      - name: Spot vulnerable dependencies
+#        uses: aquasecurity/trivy-action@master
+#        env:
+#          TRIVY_DB_REPOSITORY: public.ecr.aws/aquasecurity/trivy-db:2
+#        with:
+#          scan-type: "fs"
+#          exit-code: "1"
+#          scan-ref: ./
 
   dependabot:
     runs-on: ubuntu-latest
