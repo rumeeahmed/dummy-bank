@@ -4,8 +4,8 @@ from typing import Any, Callable
 import pytest
 from fastapi.testclient import TestClient
 
-from domain import Account, Customer
-from repository import AccountsRepository, CustomerRepository
+from dummy_bank.domain import Account, Customer
+from dummy_bank.repository import AccountsRepository, CustomerRepository
 
 
 class TestAccountNotFound:

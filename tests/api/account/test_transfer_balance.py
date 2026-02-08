@@ -7,9 +7,9 @@ from fastapi.testclient import TestClient
 from httpx import ASGITransport, AsyncClient
 from structlog.stdlib import BoundLogger
 
-from api.lock_manager import LockManager
-from domain import Account, Customer
-from repository import AccountsRepository, CustomerRepository
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.domain import Account, Customer
+from dummy_bank.repository import AccountsRepository, CustomerRepository
 
 
 class TestAccountNotFound:

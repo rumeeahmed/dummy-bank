@@ -4,7 +4,7 @@ from uuid import UUID
 
 from sqlalchemy import select
 
-from domain import Customer
+from dummy_bank.domain import Customer
 
 from .db_customer import DBCustomer
 from .repository import Repository

@@ -2,15 +2,15 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 
-from api import exceptions
-from api.dependencies import (
+from dummy_bank.api import exceptions
+from dummy_bank.api.dependencies import (
     AddressesRepositoryDep,
     CustomerRepositoryDep,
     LoggerDep,
     SettingsDep,
 )
-from domain import Address
-from repository import SearchCondition
+from dummy_bank.domain import Address
+from dummy_bank.repository import SearchCondition
 
 from ..models import (
     AddressesQueryParam,

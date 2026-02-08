@@ -5,7 +5,7 @@ from fastapi import Request
 from fastapi.testclient import TestClient
 from sqlalchemy.ext.asyncio import AsyncEngine
 
-from api.dependencies import (
+from dummy_bank.api.dependencies import (
     AccountRepositoryDep,
     AddressesRepositoryDep,
     CustomerRepositoryDep,
@@ -16,9 +16,9 @@ from api.dependencies import (
     SettingsDep,
     get_database_engine,
 )
-from api.lock_manager import LockManager
-from api.main import create_app
-from api.settings import Settings
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
 
 
 class TestGetSettings:

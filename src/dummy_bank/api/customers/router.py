@@ -2,17 +2,17 @@ from uuid import UUID, uuid4
 
 from fastapi import APIRouter, Depends, status
 
-from api import exceptions
-from api.dependencies import CustomerRepositoryDep, LoggerDep
-from api.models import (
+from dummy_bank.api import exceptions
+from dummy_bank.api.dependencies import CustomerRepositoryDep, LoggerDep
+from dummy_bank.api.models import (
     CreateCustomer,
     CustomerResponse,
     PaginatedResponse,
     PaginationQueryParams,
     UpdateCustomer,
 )
-from domain import Customer
-from repository import SearchCondition
+from dummy_bank.domain import Customer
+from dummy_bank.repository import SearchCondition
 
 router = APIRouter(tags=["customers"])
 
@@ -42,7 +42,7 @@ async def list_customers(
         page=paginated_customers["page"],
     )
 
-    return PaginatedResponse[CustomerResponse, int](
+    return PaginatedResponse[CustomerResponse](
         results=[
             CustomerResponse.model_validate(customer)
             for customer in paginated_customers["results"]

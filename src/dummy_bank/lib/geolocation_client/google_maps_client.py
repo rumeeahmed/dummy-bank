@@ -1,6 +1,6 @@
-from lib.authentication import QueryParamAuth
-from lib.geolocation_client.geolocation_protocol import GeolocationProtocol
-from lib.http_client.http_client import BaseHTTPClient
+from dummy_bank.lib.authentication import QueryParamAuth
+from dummy_bank.lib.geolocation_client.geolocation_protocol import GeolocationProtocol
+from dummy_bank.lib.http_client.http_client import BaseHTTPClient
 
 from .models import Coordinates
 

@@ -6,11 +6,14 @@ from unittest.mock import Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from api.dependencies import get_address_repository, get_customer_repository
-from api.main import create_app
-from api.settings import Settings
-from domain import Address, Customer
-from repository import AddressesRepository, CustomerRepository
+from dummy_bank.api.dependencies import (
+    get_address_repository,
+    get_customer_repository,
+)
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
+from dummy_bank.domain import Address, Customer
+from dummy_bank.repository import AddressesRepository, CustomerRepository
 
 
 class TestListAddressesForNonExistingCustomer:

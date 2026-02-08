@@ -15,18 +15,23 @@ from sqlalchemy.pool import NullPool
 from starlette.testclient import TestClient
 from structlog.stdlib import BoundLogger
 
-from api.dependencies import (
+from dummy_bank.api.dependencies import (
     get_account_repository,
     get_customer_repository,
     get_lock_manager,
     get_logger,
 )
-from api.lock_manager import LockManager
-from api.main import create_app
-from api.settings import Settings
-from lib.geolocation_client import GoogleMapsClient
-from lib.http_client import BaseHTTPClient
-from repository import AccountsRepository, AddressesRepository, Base, CustomerRepository
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.api.main import create_app
+from dummy_bank.api.settings import Settings
+from dummy_bank.lib.geolocation_client import GoogleMapsClient
+from dummy_bank.lib.http_client import BaseHTTPClient
+from dummy_bank.repository import (
+    AccountsRepository,
+    AddressesRepository,
+    Base,
+    CustomerRepository,
+)
 
 pytest_plugins = [
     "tests.make_domain_objects",

@@ -7,8 +7,8 @@ from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from sqlalchemy.exc import IntegrityError
 
-from domain import Address, Customer
-from repository import (
+from dummy_bank.domain import Address, Customer
+from dummy_bank.repository import (
     AddressesRepository,
     CustomerRepository,
     SearchCondition,

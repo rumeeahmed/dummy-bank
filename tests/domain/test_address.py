@@ -5,8 +5,8 @@ from uuid import UUID, uuid4
 import pytest
 from pydantic import ValidationError
 
-from domain import Address
-from repository import DBAddress
+from dummy_bank.domain import Address
+from dummy_bank.repository import DBAddress
 
 
 class TestID:
@@ -20,7 +20,7 @@ class TestID:
         address = make_address(id=value)
 
         with pytest.raises(AttributeError):
-            address.id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+            setattr(address, "id", UUID("c668e0af-d1b9-412f-a1da-790e5905da26"))
 
 
 class TestCustomerID:
@@ -34,7 +34,9 @@ class TestCustomerID:
         address = make_address(customer_id=value)
 
         with pytest.raises(AttributeError):
-            address.customer_id = UUID("c668e0af-d1b9-412f-a1da-790e5905da26")  # type: ignore[misc]
+            setattr(
+                address, "customer_id", UUID("c668e0af-d1b9-412f-a1da-790e5905da26")
+            )
 
 
 class TestCreatedAt:

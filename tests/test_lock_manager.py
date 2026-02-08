@@ -3,7 +3,7 @@ from uuid import UUID
 
 import pytest
 
-from api.lock_manager import LockManager
+from dummy_bank.api.lock_manager import LockManager
 
 
 class TestLockManager:

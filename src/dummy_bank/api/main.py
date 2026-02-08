@@ -1,6 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
-from typing import AsyncGenerator, TypedDict
+from typing import AsyncIterator, TypedDict
 
 import structlog
 import uvicorn
@@ -8,17 +8,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
-from api import exceptions
-from api.accounts.router import router as accounts_router
-from api.adresses.router import router as address_router
-from api.customers.router import router as customers_router
-from api.exception_handlers import (
+from dummy_bank.api import exceptions
+from dummy_bank.api.accounts.router import router as accounts_router
+from dummy_bank.api.adresses.router import router as address_router
+from dummy_bank.api.customers.router import router as customers_router
+from dummy_bank.api.exception_handlers import (
     handle_already_exists_error,
     handle_invalid_request_error,
     handle_not_found_error,
 )
-from api.lock_manager import LockManager
-from api.settings import Settings
+from dummy_bank.api.lock_manager import LockManager
+from dummy_bank.api.settings import Settings
 
 
 class State(TypedDict):
@@ -30,14 +30,15 @@ class State(TypedDict):
 
 def create_app(settings: Settings, logger: structlog.stdlib.BoundLogger) -> FastAPI:
     @asynccontextmanager
-    async def lifespan(app: FastAPI) -> AsyncGenerator[State, None]:
+    async def lifespan(app: FastAPI) -> AsyncIterator[State]:
         engine = create_async_engine(settings.database_url())
         yield {
-            "_settings": settings,
             "_logger": logger,
+            "_settings": settings,
             "_database_engine": engine,
             "_lock_manager": LockManager(),
         }
+        await settings.google_maps_client().client.aclose()
         await engine.dispose()
 
     app = FastAPI(lifespan=lifespan)

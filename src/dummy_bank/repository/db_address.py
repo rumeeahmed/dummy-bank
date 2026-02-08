@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from repository.db_customer import Base
+from dummy_bank.repository.db_customer import Base
 
 
 class DBAddress(Base):

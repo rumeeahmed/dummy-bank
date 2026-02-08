@@ -1,4 +1,4 @@
-from typing import Any, Literal, Type
+from typing import Any, Literal, Type, final
 
 from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
@@ -6,10 +6,13 @@ from sqlalchemy.orm import DeclarativeBase
 
 
 class Repository:
+    _engine: AsyncEngine
+
     def __init__(self, engine: AsyncEngine):
         self._engine = engine
 
     @property
+    @final
     def engine(self) -> AsyncEngine:
         return self._engine
 

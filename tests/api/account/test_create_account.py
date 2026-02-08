@@ -6,8 +6,8 @@ import pytest
 from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from domain import Account, Customer
-from repository import AccountsRepository, CustomerRepository
+from dummy_bank.domain import Account, Customer
+from dummy_bank.repository import AccountsRepository, CustomerRepository
 
 
 class TestCreateAccount:

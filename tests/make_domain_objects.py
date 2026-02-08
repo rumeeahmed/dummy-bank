@@ -3,7 +3,7 @@ from uuid import uuid4
 
 import pytest
 
-from domain import Account, Address, Customer
+from dummy_bank.domain import Account, Address, Customer
 
 
 @pytest.fixture()
