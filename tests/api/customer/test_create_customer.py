@@ -46,7 +46,7 @@ class TestCustomerAlreadyExists:
 
 
 class TestCreateCustomer:
-    @patch("api.customers.router.uuid4")
+    @patch("dummy_bank.api.customers.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test(

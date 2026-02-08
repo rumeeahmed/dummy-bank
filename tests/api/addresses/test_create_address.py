@@ -133,7 +133,7 @@ class TestCreateAddress:
             assert response.json() == {"detail": "address already exists"}
 
     @patch.object(GoogleMapsClient, "get_coordinates")
-    @patch("api.adresses.router.uuid4")
+    @patch("dummy_bank.api.adresses.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test_bad_geolocation_request(
