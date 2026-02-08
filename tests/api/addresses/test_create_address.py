@@ -20,7 +20,7 @@ from dummy_bank.repository import AddressesRepository, CustomerRepository
 
 class TestCreateAddress:
     @patch.object(GoogleMapsClient, "get_coordinates")
-    @patch("api.adresses.router.uuid4")
+    @patch("dummy_bank.api.adresses.router.uuid4")
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
     async def test(
