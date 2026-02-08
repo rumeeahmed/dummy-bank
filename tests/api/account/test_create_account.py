@@ -1,13 +1,14 @@
-from typing import Any, Callable
+from typing import Any
 from unittest.mock import Mock, patch
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
 from freezegun import freeze_time
+from httpx import AsyncClient
 
-from dummy_bank.domain import Account, Customer
 from dummy_bank.repository import AccountsRepository, CustomerRepository
+
+from ...make_domain_objects import MakeAccount, MakeCustomer
 
 
 class TestCreateAccount:
@@ -17,10 +18,10 @@ class TestCreateAccount:
     async def test(
         self,
         mock_uuid: Mock,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -45,18 +46,18 @@ class TestCreateAccount:
             "updated_at": "2018-11-13T15:16:08Z",
         }
 
-        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        response = await test_client.post("/dummy-bank/v1/accounts", json=payload)
         assert response.status_code == 201
         assert response.json() == expected_payload
 
     @pytest.mark.asyncio
     async def test_address_already_exists(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
-        make_customer: Callable[..., Customer],
-        make_account: Callable[..., Account],
+        make_customer: MakeCustomer,
+        make_account: MakeAccount,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -72,19 +73,19 @@ class TestCreateAccount:
             "initial_balance": 100,
             "customer_id": str(customer.id),
         }
-        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        response = await test_client.post("/dummy-bank/v1/accounts", json=payload)
         assert response.status_code == 409
         assert response.json() == {"detail": "account already exists"}
 
     @pytest.mark.asyncio
-    async def test_missing_customer(self, test_client: TestClient) -> None:
+    async def test_missing_customer(self, test_client: AsyncClient) -> None:
         payload = {
             "account_type": "debit",
             "account_number": "1234567890",
             "initial_balance": 100,
             "customer_id": "23fd1b92-4463-4659-913b-49ef7e4d48b9",
         }
-        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        response = await test_client.post("/dummy-bank/v1/accounts", json=payload)
         assert response.status_code == 404
         assert response.json() == {"detail": "customer not found"}
 
@@ -106,7 +107,7 @@ class TestCreateAccount:
     @pytest.mark.asyncio
     async def test_bad_payload(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         field: str,
         value: Any,
     ) -> None:
@@ -122,5 +123,5 @@ class TestCreateAccount:
         else:
             payload[field] = value
 
-        response = test_client.post("/dummy-bank/v1/accounts", json=payload)
+        response = await test_client.post("/dummy-bank/v1/accounts", json=payload)
         assert response.status_code == 422

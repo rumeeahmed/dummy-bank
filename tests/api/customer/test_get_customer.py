@@ -2,11 +2,9 @@ from unittest.mock import Mock
 from uuid import UUID, uuid4
 
 import pytest
-from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from dummy_bank.api.dependencies import get_customer_repository
-from dummy_bank.api.main import create_app
+from httpx import AsyncClient
 from dummy_bank.api.settings import Settings
 from dummy_bank.domain import Customer
 from dummy_bank.repository import CustomerRepository
@@ -15,7 +13,7 @@ from dummy_bank.repository import CustomerRepository
 class TestGetCustomer:
     @freeze_time("2018-11-13T15:16:08")
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository) -> None:
+    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
         expected_id = UUID("9a4bdb0b-43cf-4efc-8a4c-260f8e117d9d")
 
         payload = {
@@ -43,28 +41,14 @@ class TestGetCustomer:
 
         await customer_repository.save_customer(existing_customer)
 
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.get(f"/dummy-bank/v1/customers/{existing_customer.id}")
-            assert response.status_code == 200
-            assert response.json() == expected
+        response = await test_client.get(f"/dummy-bank/v1/customers/{existing_customer.id}")
+        assert response.status_code == 200
+        assert response.json() == expected
 
 
 class TestCustomerNotFound:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository) -> None:
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.get(f"/dummy-bank/v1/customers/{uuid4()}")
-            assert response.status_code == 404
-            assert response.json() == {"detail": "customer not found"}
+    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
+        response = await test_client.get(f"/dummy-bank/v1/customers/{uuid4()}")
+        assert response.status_code == 404
+        assert response.json() == {"detail": "customer not found"}

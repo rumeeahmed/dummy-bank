@@ -1,23 +1,24 @@
 import uuid
-from typing import Any, Callable
+from typing import Any
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
-from dummy_bank.domain import Account, Customer
 from dummy_bank.repository import AccountsRepository, CustomerRepository
+
+from ...make_domain_objects import MakeAccount, MakeCustomer
 
 
 class TestAccountNotFound:
     @pytest.mark.asyncio
     async def test(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
     ) -> None:
         payload = {"amount": 102.99}
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{uuid.uuid4()}/deposit", json=payload
         )
         assert response.status_code == 404
@@ -28,11 +29,11 @@ class TestIncreaseBalance:
     @pytest.mark.asyncio
     async def test(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
-        make_customer: Callable[..., Customer],
-        make_account: Callable[..., Account],
+        make_customer: MakeCustomer,
+        make_account: MakeAccount,
     ) -> None:
         payload = {"amount": 102.99}
         customer = make_customer()
@@ -44,7 +45,7 @@ class TestIncreaseBalance:
         loaded_customer = await customer_repository.load_customer_with_id(customer.id)
         assert loaded_customer is not None
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{account.id}/deposit", json=payload
         )
         assert response.status_code == 200
@@ -60,7 +61,7 @@ class TestIncreaseBalance:
     )
     @pytest.mark.asyncio
     async def test_bad_payload(
-        self, test_client: TestClient, field: str, value: Any
+        self, test_client: AsyncClient, field: str, value: Any
     ) -> None:
         payload: dict = {}
 
@@ -69,7 +70,7 @@ class TestIncreaseBalance:
         else:
             payload[field] = value
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{uuid.uuid4()}/deposit", json=payload
         )
         assert response.status_code == 422

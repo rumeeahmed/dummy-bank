@@ -1,5 +1,4 @@
 import datetime
-from typing import Callable
 from uuid import UUID
 
 import pytest
@@ -7,12 +6,13 @@ from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from sqlalchemy.exc import IntegrityError
 
-from dummy_bank.domain import Address, Customer
 from dummy_bank.repository import (
     AddressesRepository,
     CustomerRepository,
     SearchCondition,
 )
+
+from ..make_domain_objects import MakeAddress, MakeCustomer
 
 
 class TestLoadAddressWithId:
@@ -22,8 +22,8 @@ class TestLoadAddressWithId:
         self,
         addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_address: Callable[..., Address],
-        make_customer: Callable[..., Customer],
+        make_address: MakeAddress,
+        make_customer: MakeCustomer,
     ) -> None:
         # Create and store the customer
         customer = make_customer()
@@ -71,8 +71,8 @@ class TestLoadAddressWithCustomerId:
         self,
         addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_address: Callable[..., Address],
-        make_customer: Callable[..., Customer],
+        make_address: MakeAddress,
+        make_customer: MakeCustomer,
     ) -> None:
         # Create and store the customer
         customer = make_customer()
@@ -120,8 +120,8 @@ class TestSaveAddress:
         self,
         addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_address: Callable[..., Address],
-        make_customer: Callable[..., Customer],
+        make_address: MakeAddress,
+        make_customer: MakeCustomer,
     ) -> None:
         # Address needs a customer
         customer = make_customer()
@@ -158,8 +158,8 @@ class TestSaveAddress:
         self,
         addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_address: Callable[..., Address],
-        make_customer: Callable[..., Customer],
+        make_address: MakeAddress,
+        make_customer: MakeCustomer,
     ) -> None:
         address = make_address()
         with pytest.raises(IntegrityError):
@@ -174,8 +174,8 @@ class TestLoadAddresses:
         self,
         addresses_repository: AddressesRepository,
         customer_repository: CustomerRepository,
-        make_address: Callable[..., Address],
-        make_customer: Callable[..., Customer],
+        make_address: MakeAddress,
+        make_customer: MakeCustomer,
         field: str,
     ) -> None:
         # Create the customer

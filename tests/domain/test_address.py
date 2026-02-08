@@ -1,5 +1,4 @@
 from datetime import datetime, timezone
-from typing import Callable
 from uuid import UUID, uuid4
 
 import pytest
@@ -8,14 +7,16 @@ from pydantic import ValidationError
 from dummy_bank.domain import Address
 from dummy_bank.repository import DBAddress
 
+from ..make_domain_objects import MakeAddress
+
 
 class TestID:
-    def test_init_valid(self, make_address: Callable[..., Address]) -> None:
+    def test_init_valid(self, make_address: MakeAddress) -> None:
         value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
         address = make_address(id=value)
         assert address.id == value
 
-    def test_is_read_only(self, make_address: Callable[..., Address]) -> None:
+    def test_is_read_only(self, make_address: MakeAddress) -> None:
         value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
         address = make_address(id=value)
 
@@ -24,12 +25,12 @@ class TestID:
 
 
 class TestCustomerID:
-    def test_init_valid(self, make_address: Callable[..., Address]) -> None:
+    def test_init_valid(self, make_address: MakeAddress) -> None:
         value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
         address = make_address(customer_id=value)
         assert address.customer_id == value
 
-    def test_is_read_only(self, make_address: Callable[..., Address]) -> None:
+    def test_is_read_only(self, make_address: MakeAddress) -> None:
         value = UUID("be8f74c0-c7ff-4bd1-9d5b-6e224d6ce6bc")
         address = make_address(customer_id=value)
 
@@ -44,19 +45,17 @@ class TestCreatedAt:
 
     @pytest.mark.parametrize("value", VALID_VALUES)
     def test_init_valid(
-        self, value: datetime | None, make_address: Callable[..., Address]
+        self, value: datetime | None, make_address: MakeAddress
     ) -> None:
         address = make_address(created_at=value)
         assert address.created_at == value
 
-    def test_is_settable_if_none(self, make_address: Callable[..., Address]) -> None:
+    def test_is_settable_if_none(self, make_address: MakeAddress) -> None:
         address = make_address(created_at=None)
         address.created_at = datetime(2024, 8, 15, 16, 0, tzinfo=timezone.utc)
         assert address.created_at == datetime(2024, 8, 15, 16, 0, tzinfo=timezone.utc)
 
-    def test_is_read_only_if_not_none(
-        self, make_address: Callable[..., Address]
-    ) -> None:
+    def test_is_read_only_if_not_none(self, make_address: MakeAddress) -> None:
         value = datetime(2024, 6, 26, 1, 2, 3, 4, tzinfo=timezone.utc)
         address = make_address(created_at=value)
 
@@ -71,15 +70,13 @@ class TestUpdatedAt:
 
     @pytest.mark.parametrize("value", VALID_VALUES)
     def test_init_valid(
-        self, value: datetime | None, make_address: Callable[..., Address]
+        self, value: datetime | None, make_address: MakeAddress
     ) -> None:
         address = make_address(updated_at=value)
         assert address.updated_at == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(
-        self, value: datetime | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_set_valid(self, value: datetime | None, make_address: MakeAddress) -> None:
         address = make_address(updated_at=None)
         address.updated_at = value
         assert address.updated_at == value
@@ -89,16 +86,12 @@ class TestBuildingName:
     VALID_VALUES = [None, "Building Name"]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(building_name=value)
         assert address.building_name == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_set_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address()
         address.building_name = value
         assert address.building_name == value
@@ -109,22 +102,18 @@ class TestBuildingNumber:
     INVALID_VALUES = [None]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(building_number=value)
         assert address.building_number == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(self, value: str, make_address: Callable[..., Address]) -> None:
+    def test_set_valid(self, value: str, make_address: MakeAddress) -> None:
         address = make_address()
         address.building_number = value
         assert address.building_number == value
 
     @pytest.mark.parametrize("value", INVALID_VALUES)
-    def test_init_invalid(
-        self, value: None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_invalid(self, value: None, make_address: MakeAddress) -> None:
         with pytest.raises(ValidationError):
             make_address(building_number=value)
 
@@ -134,22 +123,18 @@ class TestStreet:
     INVALID_VALUES = [None]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(street=value)
         assert address.street == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(self, value: str, make_address: Callable[..., Address]) -> None:
+    def test_set_valid(self, value: str, make_address: MakeAddress) -> None:
         address = make_address()
         address.street = value
         assert address.street == value
 
     @pytest.mark.parametrize("value", INVALID_VALUES)
-    def test_init_invalid(
-        self, value: None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_invalid(self, value: None, make_address: MakeAddress) -> None:
         with pytest.raises(ValidationError):
             make_address(street=value)
 
@@ -159,22 +144,18 @@ class TestTown:
     INVALID_VALUES = [None]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(town=value)
         assert address.town == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(self, value: str, make_address: Callable[..., Address]) -> None:
+    def test_set_valid(self, value: str, make_address: MakeAddress) -> None:
         address = make_address()
         address.town = value
         assert address.town == value
 
     @pytest.mark.parametrize("value", INVALID_VALUES)
-    def test_init_invalid(
-        self, value: None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_invalid(self, value: None, make_address: MakeAddress) -> None:
         with pytest.raises(ValidationError):
             make_address(town=value)
 
@@ -184,22 +165,18 @@ class TestPostCode:
     INVALID_VALUES = [None]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(post_code=value)
         assert address.post_code == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(self, value: str, make_address: Callable[..., Address]) -> None:
+    def test_set_valid(self, value: str, make_address: MakeAddress) -> None:
         address = make_address()
         address.post_code = value
         assert address.post_code == value
 
     @pytest.mark.parametrize("value", INVALID_VALUES)
-    def test_init_invalid(
-        self, value: None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_invalid(self, value: None, make_address: MakeAddress) -> None:
         with pytest.raises(ValidationError):
             make_address(post_code=value)
 
@@ -208,16 +185,12 @@ class TestCounty:
     VALID_VALUES = [None, "Bedfordshire"]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(county=value)
         assert address.county == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_set_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address()
         address.county = value
         assert address.county == value
@@ -228,22 +201,18 @@ class TestCountry:
     INVALID_VALUES = [None]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(country=value)
         assert address.country == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(self, value: str, make_address: Callable[..., Address]) -> None:
+    def test_set_valid(self, value: str, make_address: MakeAddress) -> None:
         address = make_address()
         address.country = value
         assert address.country == value
 
     @pytest.mark.parametrize("value", INVALID_VALUES)
-    def test_init_invalid(
-        self, value: None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_invalid(self, value: None, make_address: MakeAddress) -> None:
         with pytest.raises(ValidationError):
             make_address(country=value)
 
@@ -252,16 +221,12 @@ class TestLatitude:
     VALID_VALUES = [None, "245"]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(latitude=value)
         assert address.latitude == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_set_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address()
         address.latitude = value
         assert address.latitude == value
@@ -271,16 +236,12 @@ class TestLongitude:
     VALID_VALUES = [None, "334"]
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_init_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_init_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address(longitude=value)
         assert address.longitude == value
 
     @pytest.mark.parametrize("value", VALID_VALUES)
-    def test_set_valid(
-        self, value: str | None, make_address: Callable[..., Address]
-    ) -> None:
+    def test_set_valid(self, value: str | None, make_address: MakeAddress) -> None:
         address = make_address()
         address.longitude = value
         assert address.longitude == value
@@ -355,7 +316,7 @@ class TestDisplayAddress:
         county: str | None,
         country: str,
         expected: str,
-        make_address: Callable[..., Address],
+        make_address: MakeAddress,
     ) -> None:
         address = make_address(
             building_name=building_name,

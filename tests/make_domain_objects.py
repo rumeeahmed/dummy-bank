@@ -1,15 +1,30 @@
-from typing import Any, Callable
-from uuid import uuid4
+from typing import Any, Protocol, TypedDict
+from uuid import UUID, uuid4
 
 import pytest
 
 from dummy_bank.domain import Account, Address, Customer
 
 
+class CustomerKwargs(TypedDict, total=False):
+    id: UUID
+    created_at: None
+    updated_at: None
+    first_name: str
+    middle_names: str
+    last_name: str
+    email: str | None
+    phone: str | None
+
+
+class MakeCustomer(Protocol):
+    def __call__(self, **overrides: CustomerKwargs) -> Customer: ...
+
+
 @pytest.fixture()
-def make_customer() -> Callable[..., Customer]:
+def make_customer() -> MakeCustomer:
     def _make_customer(**kw: Any) -> Customer:
-        kwargs: dict = {
+        kwargs: CustomerKwargs = {
             "id": uuid4(),
             "created_at": None,
             "updated_at": None,
@@ -24,10 +39,24 @@ def make_customer() -> Callable[..., Customer]:
     return _make_customer
 
 
+class MakeAccount(Protocol):
+    def __call__(self, **overrides: CustomerKwargs) -> Account: ...
+
+
+class AccountKwargs(TypedDict, total=False):
+    id: UUID
+    created_at: None
+    updated_at: None
+    customer_id: UUID
+    account_type: str
+    account_number: str
+    account_balance: int
+
+
 @pytest.fixture()
-def make_account() -> Callable[..., Account]:
+def make_account() -> MakeAccount:
     def _make_account(**kw: Any) -> Account:
-        kwargs: dict = {
+        kwargs: AccountKwargs = {
             "id": uuid4(),
             "customer_id": uuid4(),
             "created_at": None,
@@ -41,10 +70,31 @@ def make_account() -> Callable[..., Account]:
     return _make_account
 
 
+class MakeAddress(Protocol):
+    def __call__(self, **overrides: CustomerKwargs) -> Address: ...
+
+
+class AddressKwargs(TypedDict, total=False):
+    id: UUID
+    created_at: None
+    updated_at: None
+    customer_id: UUID
+    building_name: str
+    building_number: str
+    street: str
+    town: str
+    post_code: str
+    county: str
+    street: str
+    country: str
+    latitude: str
+    longitude: str
+
+
 @pytest.fixture()
-def make_address() -> Callable[..., Address]:
+def make_address() -> MakeAddress:
     def _make_address(**kw: Any) -> Address:
-        kwargs: dict = {
+        kwargs: AddressKwargs = {
             "id": uuid4(),
             "customer_id": uuid4(),
             "created_at": None,

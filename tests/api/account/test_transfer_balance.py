@@ -1,26 +1,26 @@
 import uuid
-from typing import Any, Callable
+from typing import Any
 
 import pytest
 from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from httpx import ASGITransport, AsyncClient
+from httpx import AsyncClient
 from structlog.stdlib import BoundLogger
 
 from dummy_bank.api.lock_manager import LockManager
-from dummy_bank.domain import Account, Customer
 from dummy_bank.repository import AccountsRepository, CustomerRepository
+
+from ...make_domain_objects import MakeAccount, MakeCustomer
 
 
 class TestAccountNotFound:
     @pytest.mark.asyncio
     async def test_account_1_not_found(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
         account_repository: AccountsRepository,
-        make_account: Callable[..., Account],
+        make_account: MakeAccount,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -30,7 +30,7 @@ class TestAccountNotFound:
 
         payload = {"account_id": str(account_2.id), "amount": 100}
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
         )
         assert response.status_code == 404
@@ -39,11 +39,11 @@ class TestAccountNotFound:
     @pytest.mark.asyncio
     async def test_account_2_not_found(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
         account_repository: AccountsRepository,
-        make_account: Callable[..., Account],
+        make_account: MakeAccount,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -53,7 +53,7 @@ class TestAccountNotFound:
 
         payload = {"account_id": str(uuid.uuid4()), "amount": 100}
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{account_1.id}/transfer", json=payload
         )
         assert response.status_code == 404
@@ -61,11 +61,11 @@ class TestAccountNotFound:
 
     @pytest.mark.asyncio
     async def test_customer_both_customers_not_found(
-        self, test_client: TestClient
+        self, test_client: AsyncClient
     ) -> None:
         payload = {"amount": 102.99, "account_id": str(uuid.uuid4())}
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
         )
         assert response.status_code == 404
@@ -76,11 +76,11 @@ class TestTransferBalance:
     @pytest.mark.asyncio
     async def test(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
-        make_customer: Callable[..., Customer],
-        make_account: Callable[..., Account],
+        make_customer: MakeCustomer,
+        make_account: MakeAccount,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -93,7 +93,7 @@ class TestTransferBalance:
 
         payload = {"amount": 7.87, "account_id": str(account_2.id)}
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
         )
         assert response.status_code == 200
@@ -103,11 +103,11 @@ class TestTransferBalance:
     @pytest.mark.asyncio
     async def test_transfer_more_than_balance(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
-        make_customer: Callable[..., Customer],
-        make_account: Callable[..., Account],
+        make_customer: MakeCustomer,
+        make_account: MakeAccount,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -120,7 +120,7 @@ class TestTransferBalance:
 
         payload = {"amount": 1000, "account_id": str(account_2.id)}
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
         )
         assert response.status_code == 400
@@ -137,7 +137,7 @@ class TestTransferBalance:
     @pytest.mark.asyncio
     async def test_bad_payload(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
         field: str,
         value: Any,
@@ -149,7 +149,7 @@ class TestTransferBalance:
         else:
             payload[field] = value
 
-        response = test_client.post(
+        response = await test_client.post(
             f"/dummy-bank/v1/accounts/{uuid.uuid4()}/transfer", json=payload
         )
         assert response.status_code == 422
@@ -160,10 +160,11 @@ class TestTransferBalance:
         app: FastAPI,
         customer_repository: CustomerRepository,
         account_repository: AccountsRepository,
-        make_customer: Callable[..., Customer],
-        make_account: Callable[..., Account],
+        make_customer: MakeCustomer,
+        make_account: MakeAccount,
         logger: BoundLogger,
         lock_manager: LockManager,
+        test_client: AsyncClient,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -176,19 +177,16 @@ class TestTransferBalance:
 
         payload = {"amount": 100, "account_id": str(account_2.id)}
 
-        async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
-        ) as client:
-            for i in range(10):
-                response = await client.post(
-                    f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
-                )
-                assert response.status_code == 200
-
-            response = await client.get(
-                "/dummy-bank/v1/accounts", params={"customer_id": str(customer.id)}
+        for i in range(10):
+            response = await test_client.post(
+                f"/dummy-bank/v1/accounts/{account.id}/transfer", json=payload
             )
-            response_json = response.json()
+            assert response.status_code == 200
 
-            assert response_json["results"][0]["account_balance"] == 0
-            assert response_json["results"][1]["account_balance"] == 100000
+        response = await test_client.get(
+            "/dummy-bank/v1/accounts", params={"customer_id": str(customer.id)}
+        )
+        response_json = response.json()
+
+        assert response_json["results"][0]["account_balance"] == 0
+        assert response_json["results"][1]["account_balance"] == 100000

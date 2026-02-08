@@ -1,5 +1,4 @@
 import datetime
-from typing import Callable
 from uuid import UUID
 
 import pytest
@@ -7,12 +6,13 @@ from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 from sqlalchemy.exc import IntegrityError
 
-from dummy_bank.domain import Account, Customer
 from dummy_bank.repository import (
     AccountsRepository,
     CustomerRepository,
     SearchCondition,
 )
+
+from ..make_domain_objects import MakeAccount, MakeCustomer
 
 
 class TestLoadAccountWithId:
@@ -22,8 +22,8 @@ class TestLoadAccountWithId:
         self,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
     ) -> None:
         # Create and store the customer
         customer = make_customer()
@@ -65,8 +65,8 @@ class TestLoadAccountWithCustomerId:
         self,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
     ) -> None:
         # Create and store the customer
         customer = make_customer()
@@ -112,8 +112,8 @@ class TestSaveAccount:
         self,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
     ) -> None:
         # Account needs a customer
         customer = make_customer()
@@ -145,8 +145,8 @@ class TestSaveAccount:
         self,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -171,8 +171,8 @@ class TestSaveAccount:
         self,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
     ) -> None:
         account = make_account()
         with pytest.raises(IntegrityError):
@@ -187,8 +187,8 @@ class TestLoadAccount:
         self,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
         field: str,
     ) -> None:
         # Create the customer

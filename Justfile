@@ -30,7 +30,7 @@ pytest +args="":
     uv run python -m pytest {{args}}
 
 pytest-parallel workers="auto" +args="":
-    uv run python -m pytest -n {{workers}} --dist loadscope {{args}}
+    uv run python -m pytest  -n {{workers}} --dist loadscope {{args}}
 
 pytest-verbose:
     uv run python -m pytest -vvv

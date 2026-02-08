@@ -1,13 +1,11 @@
+from httpx import AsyncClient
 from typing import Any
 from unittest.mock import Mock, patch
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
 from freezegun import freeze_time
 
-from dummy_bank.api.dependencies import get_customer_repository
-from dummy_bank.api.main import create_app
 from dummy_bank.api.settings import Settings
 from dummy_bank.domain import Customer
 from dummy_bank.repository import CustomerRepository
@@ -15,7 +13,7 @@ from dummy_bank.repository import CustomerRepository
 
 class TestCustomerAlreadyExists:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository) -> None:
+    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
         payload = {
             "email": "customer@example.com",
             "first_name": "John",
@@ -33,16 +31,9 @@ class TestCustomerAlreadyExists:
 
         await customer_repository.save_customer(existing_customer)
 
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/customers", json=payload)
-            assert response.status_code == 409
-            assert response.json() == {"detail": "customer already exists"}
+        response = await test_client.post("/dummy-bank/v1/customers", json=payload)
+        assert response.status_code == 409
+        assert response.json() == {"detail": "customer already exists"}
 
 
 class TestCreateCustomer:
@@ -52,7 +43,7 @@ class TestCreateCustomer:
     async def test(
         self,
         mock_uuid: Mock,
-        customer_repository: CustomerRepository,
+        customer_repository: CustomerRepository, test_client: AsyncClient
     ) -> None:
         expected_id = UUID("9a4bdb0b-43cf-4efc-8a4c-260f8e117d9d")
         mock_uuid.return_value = expected_id
@@ -73,16 +64,9 @@ class TestCreateCustomer:
             **payload,
         }
 
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/customers", json=payload)
-            assert response.status_code == 201
-            assert response.json() == expected
+        response = await test_client.post("/dummy-bank/v1/customers", json=payload)
+        assert response.status_code == 201
+        assert response.json() == expected
 
     @pytest.mark.parametrize(
         argnames=["field", "value"],
@@ -96,7 +80,7 @@ class TestCreateCustomer:
     )
     @pytest.mark.asyncio
     async def test_bad_payload(
-        self, customer_repository: CustomerRepository, field: str, value: Any
+        self, customer_repository: CustomerRepository, field: str, value: Any , test_client: AsyncClient
     ) -> None:
         payload = {
             "email": "john.smith@example.com",
@@ -111,12 +95,5 @@ class TestCreateCustomer:
         else:
             payload[field] = value
 
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/customers", json=payload)
-            assert response.status_code == 422
+        response = await test_client.post("/dummy-bank/v1/customers", json=payload)
+        assert response.status_code == 422

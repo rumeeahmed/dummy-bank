@@ -1,11 +1,11 @@
 import uuid
-from typing import Any, Callable
+from typing import Any
 from unittest.mock import MagicMock, Mock, patch
 from uuid import UUID
 
 import pytest
-from fastapi.testclient import TestClient
 from freezegun import freeze_time
+from httpx import AsyncClient
 
 from dummy_bank.api.dependencies import (
     get_address_repository,
@@ -13,9 +13,10 @@ from dummy_bank.api.dependencies import (
 )
 from dummy_bank.api.main import create_app
 from dummy_bank.api.settings import Settings
-from dummy_bank.domain import Address, Customer
 from dummy_bank.lib.geolocation_client import Coordinates, GoogleMapsClient
 from dummy_bank.repository import AddressesRepository, CustomerRepository
+
+from ...make_domain_objects import MakeAddress, MakeCustomer
 
 
 class TestCreateAddress:
@@ -29,7 +30,8 @@ class TestCreateAddress:
         mock_get_coordinates: MagicMock,
         customer_repository: CustomerRepository,
         addresses_repository: AddressesRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
+        test_client: AsyncClient,
     ) -> None:
         mock_get_coordinates.return_value = Coordinates(
             latitude="55.55", longitude="22.22"
@@ -66,32 +68,18 @@ class TestCreateAddress:
             "display_address": "Default Building, 123, Main Street, Springfield, Default County, AB12 3CD, Default Country",
         }
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_address_repository() -> AddressesRepository:
-            return addresses_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-        app.dependency_overrides[get_address_repository] = (
-            override_get_address_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/addresses", json=payload)
-            assert response.status_code == 201
-            assert response.json() == expected_payload
+        response = await test_client.post("/dummy-bank/v1/addresses", json=payload)
+        assert response.status_code == 201
+        assert response.json() == expected_payload
 
     @pytest.mark.asyncio
     async def test_customer_address_exists(
         self,
         customer_repository: CustomerRepository,
         addresses_repository: AddressesRepository,
-        make_customer: Callable[..., Customer],
-        make_address: Callable[..., Address],
+        make_customer: MakeCustomer,
+        make_address: MakeAddress,
+        test_client: AsyncClient,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
@@ -113,24 +101,9 @@ class TestCreateAddress:
             "customer_id": str(customer.id),
         }
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_address_repository() -> AddressesRepository:
-            return addresses_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-        app.dependency_overrides[get_address_repository] = (
-            override_get_address_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/addresses", json=payload)
-            assert response.status_code == 409
-            assert response.json() == {"detail": "address already exists"}
+        response = await test_client.post("/dummy-bank/v1/addresses", json=payload)
+        assert response.status_code == 409
+        assert response.json() == {"detail": "address already exists"}
 
     @patch.object(GoogleMapsClient, "get_coordinates")
     @patch("dummy_bank.api.adresses.router.uuid4")
@@ -142,7 +115,8 @@ class TestCreateAddress:
         mock_get_coordinates: MagicMock,
         customer_repository: CustomerRepository,
         addresses_repository: AddressesRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
+        test_client: AsyncClient,
     ) -> None:
         mock_get_coordinates.side_effect = [Exception()]
 
@@ -191,16 +165,16 @@ class TestCreateAddress:
             override_get_address_repository
         )
 
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/addresses", json=payload)
-            assert response.status_code == 201
-            assert response.json() == expected_payload
+        response = await test_client.post("/dummy-bank/v1/addresses", json=payload)
+        assert response.status_code == 201
+        assert response.json() == expected_payload
 
     @pytest.mark.asyncio
     async def test_missing_customer(
         self,
         customer_repository: CustomerRepository,
         addresses_repository: AddressesRepository,
+        test_client: AsyncClient,
     ) -> None:
         payload = {
             "building_name": "Default Building",
@@ -213,24 +187,9 @@ class TestCreateAddress:
             "customer_id": "6199687f-3c89-4c92-a532-28ec5f1d5f32",
         }
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_address_repository() -> AddressesRepository:
-            return addresses_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_address_repository] = (
-            override_get_address_repository
-        )
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/addresses", json=payload)
-            assert response.status_code == 404
-            assert response.json() == {"detail": "customer not found"}
+        response = await test_client.post("/dummy-bank/v1/addresses", json=payload)
+        assert response.status_code == 404
+        assert response.json() == {"detail": "customer not found"}
 
     @pytest.mark.parametrize(
         argnames=["field", "value"],
@@ -252,7 +211,11 @@ class TestCreateAddress:
     )
     @pytest.mark.asyncio
     async def test_bad_payload(
-        self, customer_repository: CustomerRepository, field: str, value: Any
+        self,
+        customer_repository: CustomerRepository,
+        field: str,
+        value: Any,
+        test_client: AsyncClient,
     ) -> None:
         payload = {
             "building_name": "Default Building",
@@ -270,14 +233,5 @@ class TestCreateAddress:
         else:
             payload[field] = value
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
-        )
-
-        with TestClient(app) as client:
-            response = client.post("/dummy-bank/v1/addresses", json=payload)
-            assert response.status_code == 422
+        response = await test_client.post("/dummy-bank/v1/addresses", json=payload)
+        assert response.status_code == 422

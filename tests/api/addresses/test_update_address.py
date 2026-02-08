@@ -1,40 +1,27 @@
-from typing import Any, Callable
-from unittest.mock import MagicMock, Mock, patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
-from dummy_bank.api.dependencies import (
-    get_address_repository,
-    get_customer_repository,
-)
-from dummy_bank.api.main import create_app
-from dummy_bank.api.settings import Settings
-from dummy_bank.domain import Address, Customer
 from dummy_bank.lib.geolocation_client import Coordinates, GoogleMapsClient
 from dummy_bank.repository import AddressesRepository, CustomerRepository
+
+from ...make_domain_objects import MakeAddress, MakeCustomer
 
 
 class TestAddressNotFound:
     @pytest.mark.asyncio
-    async def test(self, addresses_repository: AddressesRepository) -> None:
+    async def test(
+        self, addresses_repository: AddressesRepository, test_client: AsyncClient
+    ) -> None:
         payload = {"building_name": "My building"}
-
-        def override_get_address_repository() -> AddressesRepository:
-            return addresses_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_address_repository] = (
-            override_get_address_repository
+        response = await test_client.patch(
+            "/dummy-bank/v1/addresses/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
+            json=payload,
         )
-
-        with TestClient(app) as client:
-            response = client.patch(
-                "/dummy-bank/v1/addresses/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
-                json=payload,
-            )
-            assert response.status_code == 404
-            assert response.json() == {"detail": "address not found"}
+        assert response.status_code == 404
+        assert response.json() == {"detail": "address not found"}
 
 
 class TestUpdateField:
@@ -58,12 +45,13 @@ class TestUpdateField:
         self,
         mock_get_coordinates: MagicMock,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
         addresses_repository: AddressesRepository,
-        make_address: Callable[..., Address],
+        make_address: MakeAddress,
         field: str,
         original: str,
         updated: Any,
+        test_client: AsyncClient,
     ) -> None:
         mock_get_coordinates.return_value = Coordinates(
             latitude="55.55", longitude="22.22"
@@ -73,33 +61,18 @@ class TestUpdateField:
 
         existing = make_address(**{field: original}, customer_id=customer.id)
         await addresses_repository.save_address(existing)
-
         assert getattr(existing, field) == original
 
         payload = {field: updated}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_address_repository() -> AddressesRepository:
-            return addresses_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = await test_client.patch(
+            f"/dummy-bank/v1/addresses/{existing.id}", json=payload
         )
-        app.dependency_overrides[get_address_repository] = (
-            override_get_address_repository
-        )
-        with TestClient(app) as client:
-            response = client.patch(
-                f"/dummy-bank/v1/addresses/{existing.id}", json=payload
-            )
-            assert response.status_code == 200
-            response_json = response.json()
-            assert response_json[field] == updated
-            assert response_json["latitude"] == "55.55"
-            assert response_json["longitude"] == "22.22"
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json[field] == updated
+        assert response_json["latitude"] == "55.55"
+        assert response_json["longitude"] == "22.22"
 
     @pytest.mark.parametrize(
         "lat, lon",
@@ -114,11 +87,12 @@ class TestUpdateField:
         self,
         mock_get_coordinates: MagicMock,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
         addresses_repository: AddressesRepository,
-        make_address: Callable[..., Address],
+        make_address: MakeAddress,
         lat: str | None,
         lon: str | None,
+        test_client: AsyncClient,
     ) -> None:
         mock_get_coordinates.side_effect = [Exception()]
         customer = make_customer()
@@ -129,25 +103,11 @@ class TestUpdateField:
 
         payload = {"building_name": "My building"}
 
-        def override_get_customer_repository() -> CustomerRepository:
-            return customer_repository
-
-        def override_get_address_repository() -> AddressesRepository:
-            return addresses_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = (
-            override_get_customer_repository
+        response = await test_client.patch(
+            f"/dummy-bank/v1/addresses/{existing.id}", json=payload
         )
-        app.dependency_overrides[get_address_repository] = (
-            override_get_address_repository
-        )
-        with TestClient(app) as client:
-            response = client.patch(
-                f"/dummy-bank/v1/addresses/{existing.id}", json=payload
-            )
-            assert response.status_code == 200
-            response_json = response.json()
-            assert response_json["building_name"] == "My building"
-            assert response_json["latitude"] == lat
-            assert response_json["longitude"] == lon
+        assert response.status_code == 200
+        response_json = response.json()
+        assert response_json["building_name"] == "My building"
+        assert response_json["latitude"] == lat
+        assert response_json["longitude"] == lon

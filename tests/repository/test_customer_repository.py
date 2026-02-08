@@ -1,13 +1,13 @@
 import datetime
-from typing import Callable
 from uuid import UUID
 
 import pytest
 from freezegun import freeze_time
 from freezegun.api import FakeDatetime
 
-from dummy_bank.domain import Customer
 from dummy_bank.repository import CustomerRepository, SearchCondition
+
+from ..make_domain_objects import MakeCustomer
 
 
 class TestLoadCustomerWithId:
@@ -16,7 +16,7 @@ class TestLoadCustomerWithId:
     async def test_exists(
         self,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
     ) -> None:
         # Create and store the customer
         customer_id = UUID("b9448b6a-c470-45e7-8de0-6b926065cd40")
@@ -62,7 +62,7 @@ class TestSaveCustomer:
     async def test(
         self,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
     ) -> None:
         customer = make_customer()
 
@@ -96,7 +96,7 @@ class TestLoadCustomer:
     async def test_exists(
         self,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
         field: str,
     ) -> None:
         # Create the customer
@@ -139,7 +139,7 @@ class TestLoadCustomer:
         customer_repository: CustomerRepository,
         field: str,
         value: str,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
     ) -> None:
         # Add some noise to the DB.
         customer = make_customer(

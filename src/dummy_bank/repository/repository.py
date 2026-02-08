@@ -1,27 +1,35 @@
 from typing import Any, Literal, Type, final
 
 from sqlalchemy import func, select, text
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker
+from sqlalchemy.ext.asyncio import (
+    AsyncConnection,
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+)
 from sqlalchemy.orm import DeclarativeBase
 
 
 class Repository:
-    _engine: AsyncEngine
+    _engine: AsyncEngine | AsyncConnection
 
-    def __init__(self, engine: AsyncEngine):
+    def __init__(self, engine: AsyncEngine | AsyncConnection):
         self._engine = engine
 
     @property
     @final
-    def engine(self) -> AsyncEngine:
+    def engine(self) -> AsyncEngine | AsyncConnection:
         return self._engine
 
     async def health_check(self) -> Literal["ok"]:
         """
         Check if the database connection is alive and healthy.
         """
-        async with self.engine.connect() as conn:
-            await conn.execute(text("select 1"))
+        if isinstance(self.engine, AsyncEngine):
+            async with self.engine.connect() as conn:
+                await conn.execute(text("select 1"))
+        else:
+            await self.engine.execute(text("select 1"))
 
         return "ok"
 

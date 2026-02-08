@@ -1,36 +1,26 @@
 import asyncio
-from typing import Callable
 from unittest.mock import Mock
 
 import pytest
-from fastapi.testclient import TestClient
-
-from dummy_bank.api.dependencies import get_customer_repository
-from dummy_bank.api.main import create_app
+from httpx import AsyncClient
 from dummy_bank.api.settings import Settings
-from dummy_bank.domain import Customer
 from dummy_bank.repository import CustomerRepository
+
+from ...make_domain_objects import MakeCustomer
 
 
 class TestListCustomersThatDontExist:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository) -> None:
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/customers")
-            assert response.status_code == 200
-            assert response.json() == {
-                "page": 1,
-                "page_size": 50,
-                "results": [],
-                "total_count": 0,
-                "total_pages": 0,
-            }
+    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
+        response = await test_client.get("/dummy-bank/v1/customers")
+        assert response.status_code == 200
+        assert response.json() == {
+            "page": 1,
+            "page_size": 50,
+            "results": [],
+            "total_count": 0,
+            "total_pages": 0,
+        }
 
 
 class TestListCustomers:
@@ -45,10 +35,11 @@ class TestListCustomers:
     async def test(
         self,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
         page: int,
         page_size: int,
         expected_total_pages: int,
+            test_client: AsyncClient,
     ) -> None:
         params = {"page": page, "page_size": page_size}
         coroutines = []
@@ -67,28 +58,21 @@ class TestListCustomers:
 
         await asyncio.gather(*coroutines)
 
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
+        response = await test_client.get("/dummy-bank/v1/customers", params=params)
+        assert response.status_code == 200
 
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/customers", params=params)
-            assert response.status_code == 200
-
-            response_json = response.json()
-            assert len(response_json["results"]) == page_size
-            assert response_json["total_count"] == 20
-            assert response_json["total_pages"] == expected_total_pages
-            assert response_json["page"] == page
-            assert response_json["page_size"] == page_size
+        response_json = response.json()
+        assert len(response_json["results"]) == page_size
+        assert response_json["total_count"] == 20
+        assert response_json["total_pages"] == expected_total_pages
+        assert response_json["page"] == page
+        assert response_json["page_size"] == page_size
 
     @pytest.mark.asyncio
     async def test_default_page_params(
         self,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer, test_client: AsyncClient
     ) -> None:
         coroutines = []
         for i in range(20):
@@ -106,19 +90,12 @@ class TestListCustomers:
 
         await asyncio.gather(*coroutines)
 
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
+        response = await test_client.get("/dummy-bank/v1/customers")
+        assert response.status_code == 200
 
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.get("/dummy-bank/v1/customers")
-            assert response.status_code == 200
-
-            response_json = response.json()
-            assert len(response_json["results"]) == 20
-            assert response_json["total_count"] == 20
-            assert response_json["total_pages"] == 1
-            assert response_json["page"] == 1
-            assert response_json["page_size"] == 50
+        response_json = response.json()
+        assert len(response_json["results"]) == 20
+        assert response_json["total_count"] == 20
+        assert response_json["total_pages"] == 1
+        assert response_json["page"] == 1
+        assert response_json["page_size"] == 50

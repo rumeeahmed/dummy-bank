@@ -7,19 +7,20 @@ import pytest
 import structlog
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from httpx import ASGITransport, AsyncClient
 from psycopg import Connection
 from pytest_postgresql import factories
 from sqlalchemy import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
-from sqlalchemy.pool import NullPool
-from starlette.testclient import TestClient
 from structlog.stdlib import BoundLogger
 
 from dummy_bank.api.dependencies import (
     get_account_repository,
     get_customer_repository,
+    get_database_engine,
     get_lock_manager,
     get_logger,
+    get_settings,
 )
 from dummy_bank.api.lock_manager import LockManager
 from dummy_bank.api.main import create_app
@@ -29,7 +30,6 @@ from dummy_bank.lib.http_client import BaseHTTPClient
 from dummy_bank.repository import (
     AccountsRepository,
     AddressesRepository,
-    Base,
     CustomerRepository,
 )
 
@@ -40,10 +40,34 @@ pytest_plugins = [
 _PYTEST_WORKER = os.getenv("PYTEST_XDIST_WORKER", "master")
 _TEST_DB_NAME = f"dummy_bank_{_PYTEST_WORKER}"
 
-postgresql_in_docker = factories.postgresql_noproc(
-    port=5432, user="service", password="service", dbname="postgres"
+
+def load_schema(
+    *,
+    host: str,
+    port: int,
+    user: str,
+    dbname: str,
+    password: str,
+) -> None:
+    from sqlalchemy import create_engine
+
+    from dummy_bank.repository import Base
+
+    url = f"postgresql+psycopg://{user}:{password}@{host}:{port}/{dbname}"
+    engine = create_engine(url)
+    Base.metadata.create_all(engine)
+    engine.dispose()
+
+
+postgresql_proc = factories.postgresql_proc(
+    user="service",
+    password="service",
+    host="127.0.0.1",
+    dbname="postgres",
+    load=[load_schema],
 )
-postgresql = factories.postgresql("postgresql_in_docker", dbname=_TEST_DB_NAME)
+
+postgresql = factories.postgresql("postgresql_proc", dbname=_TEST_DB_NAME)
 
 
 @pytest.fixture
@@ -57,10 +81,11 @@ async def database_engine(postgresql: Connection) -> AsyncIterator[AsyncEngine]:
         database=postgresql.info.dbname,
     )
 
-    engine = create_async_engine(url, poolclass=NullPool)
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
+    engine = create_async_engine(
+        url,
+        pool_size=5,
+        max_overflow=10,
+    )
 
     yield engine
 
@@ -69,6 +94,7 @@ async def database_engine(postgresql: Connection) -> AsyncIterator[AsyncEngine]:
 
 @pytest.fixture
 def app(
+    database_engine: AsyncEngine,
     customer_repository: CustomerRepository,
     lock_manager: LockManager,
     account_repository: AccountsRepository,
@@ -87,18 +113,27 @@ def app(
     def override_get_logger() -> BoundLogger:
         return logger
 
+    def override_get_settings() -> Settings:
+        return settings
+
+    def override_get_database_engine() -> AsyncEngine:
+        return database_engine
+
     app = create_app(settings=Settings(), logger=Mock())
     app.dependency_overrides[get_customer_repository] = override_get_customer_repository
     app.dependency_overrides[get_account_repository] = override_get_account_repository
     app.dependency_overrides[get_lock_manager] = override_get_lock_manager
     app.dependency_overrides[get_logger] = override_get_logger
+    app.dependency_overrides[get_settings] = override_get_settings
+    app.dependency_overrides[get_database_engine] = override_get_database_engine
 
     return app
 
 
 @pytest.fixture
-def test_client(app: FastAPI) -> Generator[TestClient, None, None]:
-    with TestClient(app) as client:
+async def test_client(app: FastAPI) -> AsyncIterator[AsyncClient]:
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
         yield client
 
 

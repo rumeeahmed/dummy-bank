@@ -1,19 +1,19 @@
 import asyncio
 import uuid
-from typing import Callable
 
 import pytest
-from fastapi.testclient import TestClient
+from httpx import AsyncClient
 
-from dummy_bank.domain import Account, Customer
 from dummy_bank.repository import AccountsRepository, CustomerRepository
+
+from ...make_domain_objects import MakeAccount, MakeCustomer
 
 
 class TestListAccountForNonExistingCustomer:
     @pytest.mark.asyncio
-    async def test(self, test_client: TestClient) -> None:
+    async def test(self, test_client: AsyncClient) -> None:
         params = {"customer_id": "74505956-f7fe-4bf6-837a-aaa510b57b62"}
-        response = test_client.get("/dummy-bank/v1/accounts", params=params)
+        response = await test_client.get("/dummy-bank/v1/accounts", params=params)
         assert response.status_code == 200
         assert response.json() == {
             "page": 1,
@@ -28,15 +28,15 @@ class TestListAccountsThatDontExist:
     @pytest.mark.asyncio
     async def test(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
     ) -> None:
         customer = make_customer()
         await customer_repository.save_customer(customer)
         params = {"customer_id": str(customer.id)}
 
-        response = test_client.get("/dummy-bank/v1/accounts", params=params)
+        response = await test_client.get("/dummy-bank/v1/accounts", params=params)
         assert response.status_code == 200
         assert response.json() == {
             "page": 1,
@@ -58,11 +58,11 @@ class TestListAccounts:
     @pytest.mark.asyncio
     async def test(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_account: Callable[..., Account],
-        make_customer: Callable[..., Customer],
+        make_account: MakeAccount,
+        make_customer: MakeCustomer,
         page: int,
         page_size: int,
         expected_total_pages: int,
@@ -104,7 +104,7 @@ class TestListAccounts:
 
         await asyncio.gather(*coroutines)
 
-        response = test_client.get("/dummy-bank/v1/accounts", params=params)  # type: ignore
+        response = await test_client.get("/dummy-bank/v1/accounts", params=params)  # type: ignore
         assert response.status_code == 200
 
         response_json = response.json()
@@ -117,11 +117,11 @@ class TestListAccounts:
     @pytest.mark.asyncio
     async def test_default_page_params(
         self,
-        test_client: TestClient,
+        test_client: AsyncClient,
         account_repository: AccountsRepository,
         customer_repository: CustomerRepository,
-        make_customer: Callable[..., Customer],
-        make_account: Callable[..., Account],
+        make_customer: MakeCustomer,
+        make_account: MakeAccount,
     ) -> None:
         customer_id = uuid.uuid4()
         params = {"customer_id": str(customer_id)}
@@ -158,7 +158,7 @@ class TestListAccounts:
 
         await asyncio.gather(*coroutines)
 
-        response = test_client.get("/dummy-bank/v1/accounts", params=params)
+        response = await test_client.get("/dummy-bank/v1/accounts", params=params)
         assert response.status_code == 200
 
         response_json = response.json()
@@ -172,6 +172,6 @@ class TestListAccounts:
         argnames="params", argvalues=[{}, {"customer_id": "dummy"}]
     )
     @pytest.mark.asyncio
-    async def test_bad_params(self, test_client: TestClient, params: dict) -> None:
-        response = test_client.get("/dummy-bank/v1/accounts", params=params)
+    async def test_bad_params(self, test_client: AsyncClient, params: dict) -> None:
+        response = await test_client.get("/dummy-bank/v1/accounts", params=params)
         assert response.status_code == 422

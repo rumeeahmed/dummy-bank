@@ -1,34 +1,25 @@
-from typing import Any, Callable
+from alembic.op import f
+from typing import Any
 from unittest.mock import Mock
-
+from httpx import AsyncClient
 import pytest
-from fastapi.testclient import TestClient
 
-from dummy_bank.api.dependencies import get_customer_repository
-from dummy_bank.api.main import create_app
 from dummy_bank.api.settings import Settings
-from dummy_bank.domain import Customer
 from dummy_bank.repository import CustomerRepository
+
+from ...make_domain_objects import MakeCustomer
 
 
 class TestCustomerNotFound:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository) -> None:
+    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
         payload = {"phone": "01234567890"}
-
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.patch(
-                "/dummy-bank/v1/customers/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
-                json=payload,
-            )
-            assert response.status_code == 404
-            assert response.json() == {"detail": "customer not found"}
+        response = await test_client.patch(
+            "/dummy-bank/v1/customers/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
+            json=payload,
+        )
+        assert response.status_code == 404
+        assert response.json() == {"detail": "customer not found"}
 
 
 @pytest.mark.parametrize(
@@ -48,24 +39,16 @@ class TestUpdateField:
         field: str,
         original: Any,
         updated: Any,
-        make_customer: Callable[..., Customer],
+        make_customer: MakeCustomer,
+            test_client: AsyncClient,
     ) -> None:
         existing = make_customer(**{field: original})
         await customer_repository.save_customer(existing)
-
         assert getattr(existing, field) == original
 
         request = {field: updated}
-
-        def override_get_repository() -> CustomerRepository:
-            return customer_repository
-
-        app = create_app(settings=Settings(), logger=Mock())
-        app.dependency_overrides[get_customer_repository] = override_get_repository
-
-        with TestClient(app) as client:
-            response = client.patch(
-                f"/dummy-bank/v1/customers/{existing.id}", json=request
-            )
-            assert response.status_code == 200
-            assert response.json()[field] == updated
+        response = await test_client.patch(
+            f"/dummy-bank/v1/customers/{existing.id}", json=request
+        )
+        assert response.status_code == 200
+        assert response.json()[field] == updated
