@@ -59,7 +59,7 @@ class TestUpdateField:
         customer = make_customer()
         await customer_repository.save_customer(customer)
 
-        existing = make_address(**{field: original}, customer_id=customer.id)
+        existing = make_address(**{field: original}, customer_id=customer.id)  # ty:ignore[invalid-argument-type]
         await addresses_repository.save_address(existing)
         assert getattr(existing, field) == original
 

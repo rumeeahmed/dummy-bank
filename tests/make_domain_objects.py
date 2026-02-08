@@ -1,114 +1,154 @@
-from typing import Any, Protocol, TypedDict
+from datetime import datetime
+from typing import Final, Protocol
 from uuid import UUID, uuid4
 
 import pytest
 
 from dummy_bank.domain import Account, Address, Customer
 
+# ---------------------------------------------------------------------------
+# Sentinel (distinguishes "not provided" from "provided as None")
+# ---------------------------------------------------------------------------
 
-class CustomerKwargs(TypedDict, total=False):
-    id: UUID
-    created_at: None
-    updated_at: None
-    first_name: str
-    middle_names: str
-    last_name: str
-    email: str | None
-    phone: str | None
+_UNSET: Final = object()
 
 
 class MakeCustomer(Protocol):
-    def __call__(self, **overrides: CustomerKwargs) -> Customer: ...
+    def __call__(
+        self,
+        *,
+        id: UUID | None | object = _UNSET,
+        created_at: datetime | None | object = _UNSET,
+        updated_at: datetime | None | object = _UNSET,
+        first_name: str | None | object = _UNSET,
+        middle_names: str | None | object = _UNSET,
+        last_name: str | None | object = _UNSET,
+        email: str | None | object = _UNSET,
+        phone: str | None | object = _UNSET,
+    ) -> Customer: ...
 
 
 @pytest.fixture()
 def make_customer() -> MakeCustomer:
-    def _make_customer(**kw: Any) -> Customer:
-        kwargs: CustomerKwargs = {
-            "id": uuid4(),
-            "created_at": None,
-            "updated_at": None,
-            "first_name": "Bob",
-            "middle_names": "Bobberson",
-            "last_name": "Bobbington",
-            "email": None,
-            "phone": None,
-        }
-        return Customer(**{**kwargs, **kw})
+    def _make_customer(
+        *,
+        id: UUID | None | object = _UNSET,
+        created_at: datetime | None | object = _UNSET,
+        updated_at: datetime | None | object = _UNSET,
+        first_name: str | None | object = _UNSET,
+        middle_names: str | None | object = _UNSET,
+        last_name: str | None | object = _UNSET,
+        email: str | None | object = _UNSET,
+        phone: str | None | object = _UNSET,
+    ) -> Customer:
+        return Customer(
+            id=uuid4() if id is _UNSET else id,
+            created_at=None if created_at is _UNSET else created_at,
+            updated_at=None if updated_at is _UNSET else updated_at,
+            first_name="Bob" if first_name is _UNSET else first_name,
+            middle_names="Bobberson" if middle_names is _UNSET else middle_names,
+            last_name="Bobbington" if last_name is _UNSET else last_name,
+            email=None if email is _UNSET else email,
+            phone=None if phone is _UNSET else phone,
+        )
 
     return _make_customer
 
 
 class MakeAccount(Protocol):
-    def __call__(self, **overrides: CustomerKwargs) -> Account: ...
-
-
-class AccountKwargs(TypedDict, total=False):
-    id: UUID
-    created_at: None
-    updated_at: None
-    customer_id: UUID
-    account_type: str
-    account_number: str
-    account_balance: int
+    def __call__(
+        self,
+        *,
+        id: UUID | None | object = _UNSET,
+        created_at: datetime | None | object = _UNSET,
+        updated_at: datetime | None | object = _UNSET,
+        customer_id: UUID | None | object = _UNSET,
+        account_type: str | None | object = _UNSET,
+        account_number: str | None | object = _UNSET,
+        account_balance: int | float | None | object = _UNSET,
+        is_new: bool | object = _UNSET,
+    ) -> Account: ...
 
 
 @pytest.fixture()
 def make_account() -> MakeAccount:
-    def _make_account(**kw: Any) -> Account:
-        kwargs: AccountKwargs = {
-            "id": uuid4(),
-            "customer_id": uuid4(),
-            "created_at": None,
-            "updated_at": None,
-            "account_type": "Current",
-            "account_number": "12345",
-            "account_balance": 0,
-        }
-        return Account(**{**kwargs, **kw})
+    def _make_account(
+        *,
+        id: UUID | None | object = _UNSET,
+        created_at: datetime | None | object = _UNSET,
+        updated_at: datetime | None | object = _UNSET,
+        customer_id: UUID | None | object = _UNSET,
+        account_type: str | None | object = _UNSET,
+        account_number: str | None | object = _UNSET,
+        account_balance: int | float | None | object = _UNSET,
+        is_new: bool | object = _UNSET,
+    ) -> Account:
+        return Account(
+            id=uuid4() if id is _UNSET else id,
+            created_at=None if created_at is _UNSET else created_at,
+            updated_at=None if updated_at is _UNSET else updated_at,
+            customer_id=uuid4() if customer_id is _UNSET else customer_id,
+            account_type="Current" if account_type is _UNSET else account_type,
+            account_number="12345" if account_number is _UNSET else account_number,
+            account_balance=0 if account_balance is _UNSET else account_balance,
+            is_new=True if is_new is _UNSET else is_new,
+        )
 
     return _make_account
 
 
 class MakeAddress(Protocol):
-    def __call__(self, **overrides: CustomerKwargs) -> Address: ...
-
-
-class AddressKwargs(TypedDict, total=False):
-    id: UUID
-    created_at: None
-    updated_at: None
-    customer_id: UUID
-    building_name: str
-    building_number: str
-    street: str
-    town: str
-    post_code: str
-    county: str
-    street: str
-    country: str
-    latitude: str
-    longitude: str
+    def __call__(
+        self,
+        *,
+        id: UUID | None | object = _UNSET,
+        created_at: datetime | None | object = _UNSET,
+        updated_at: datetime | None | object = _UNSET,
+        customer_id: UUID | None | object = _UNSET,
+        building_name: str | None | object = _UNSET,
+        building_number: str | None | object = _UNSET,
+        street: str | None | object = _UNSET,
+        town: str | None | object = _UNSET,
+        post_code: str | None | object = _UNSET,
+        county: str | None | object = _UNSET,
+        country: str | None | object = _UNSET,
+        latitude: str | None | object = _UNSET,
+        longitude: str | None | object = _UNSET,
+    ) -> Address: ...
 
 
 @pytest.fixture()
 def make_address() -> MakeAddress:
-    def _make_address(**kw: Any) -> Address:
-        kwargs: AddressKwargs = {
-            "id": uuid4(),
-            "customer_id": uuid4(),
-            "created_at": None,
-            "updated_at": None,
-            "building_name": "My Building",
-            "building_number": "12345",
-            "street": "Some street",
-            "town": "Some town",
-            "post_code": "Some postcode",
-            "county": "Some county",
-            "country": "Some country",
-            "latitude": "123",
-            "longitude": "123",
-        }
-        return Address(**{**kwargs, **kw})
+    def _make_address(
+        *,
+        id: UUID | None | object = _UNSET,
+        created_at: datetime | None | object = _UNSET,
+        updated_at: datetime | None | object = _UNSET,
+        customer_id: UUID | None | object = _UNSET,
+        building_name: str | None | object = _UNSET,
+        building_number: str | None | object = _UNSET,
+        street: str | None | object = _UNSET,
+        town: str | None | object = _UNSET,
+        post_code: str | None | object = _UNSET,
+        county: str | None | object = _UNSET,
+        country: str | None | object = _UNSET,
+        latitude: str | None | object = _UNSET,
+        longitude: str | None | object = _UNSET,
+    ) -> Address:
+        return Address(
+            id=uuid4() if id is _UNSET else id,
+            created_at=None if created_at is _UNSET else created_at,
+            updated_at=None if updated_at is _UNSET else updated_at,
+            customer_id=uuid4() if customer_id is _UNSET else customer_id,
+            building_name="My Building" if building_name is _UNSET else building_name,
+            building_number="12345" if building_number is _UNSET else building_number,
+            street="Some street" if street is _UNSET else street,
+            town="Some town" if town is _UNSET else town,
+            post_code="Some postcode" if post_code is _UNSET else post_code,
+            county="Some county" if county is _UNSET else county,
+            country="Some country" if country is _UNSET else country,
+            latitude="123" if latitude is _UNSET else latitude,
+            longitude="123" if longitude is _UNSET else longitude,
+        )
 
     return _make_address

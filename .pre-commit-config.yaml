@@ -23,3 +23,15 @@ repos:
   hooks:
   - id: autoflake
     args: [--remove-all-unused-imports, "--remove-duplicate-keys", "--remove-unused-variables", --in-place]
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.9.6
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+
+  - repo: https://github.com/astral-sh/ty-pre-commit
+    rev: v0.0.15
+    hooks:
+      - id: ty

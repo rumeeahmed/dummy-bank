@@ -1,9 +1,8 @@
 import asyncio
-from unittest.mock import Mock
 
 import pytest
 from httpx import AsyncClient
-from dummy_bank.api.settings import Settings
+
 from dummy_bank.repository import CustomerRepository
 
 from ...make_domain_objects import MakeCustomer
@@ -11,7 +10,9 @@ from ...make_domain_objects import MakeCustomer
 
 class TestListCustomersThatDontExist:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
+    async def test(
+        self, customer_repository: CustomerRepository, test_client: AsyncClient
+    ) -> None:
         response = await test_client.get("/dummy-bank/v1/customers")
         assert response.status_code == 200
         assert response.json() == {
@@ -39,7 +40,7 @@ class TestListCustomers:
         page: int,
         page_size: int,
         expected_total_pages: int,
-            test_client: AsyncClient,
+        test_client: AsyncClient,
     ) -> None:
         params = {"page": page, "page_size": page_size}
         coroutines = []
@@ -72,7 +73,8 @@ class TestListCustomers:
     async def test_default_page_params(
         self,
         customer_repository: CustomerRepository,
-        make_customer: MakeCustomer, test_client: AsyncClient
+        make_customer: MakeCustomer,
+        test_client: AsyncClient,
     ) -> None:
         coroutines = []
         for i in range(20):

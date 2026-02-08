@@ -100,7 +100,7 @@ class TestLoadCustomer:
         field: str,
     ) -> None:
         # Create the customer
-        customer_id = "ff5efd4c-c13c-4787-8a62-2941c0a5553c"
+        customer_id = UUID("ff5efd4c-c13c-4787-8a62-2941c0a5553c")
         email = "test@example.com"
         customer = make_customer(id=customer_id, email=email)
         await customer_repository.save_customer(customer)
@@ -143,7 +143,7 @@ class TestLoadCustomer:
     ) -> None:
         # Add some noise to the DB.
         customer = make_customer(
-            id="4499599e-b25d-488b-b581-d6979837ac21",
+            id=UUID("4499599e-b25d-488b-b581-d6979837ac21"),
             email="noise@example.com",
         )
         await customer_repository.save_customer(customer)

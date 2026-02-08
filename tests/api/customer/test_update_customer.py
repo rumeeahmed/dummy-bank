@@ -1,10 +1,8 @@
-from alembic.op import f
 from typing import Any
-from unittest.mock import Mock
-from httpx import AsyncClient
-import pytest
 
-from dummy_bank.api.settings import Settings
+import pytest
+from httpx import AsyncClient
+
 from dummy_bank.repository import CustomerRepository
 
 from ...make_domain_objects import MakeCustomer
@@ -12,7 +10,9 @@ from ...make_domain_objects import MakeCustomer
 
 class TestCustomerNotFound:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
+    async def test(
+        self, customer_repository: CustomerRepository, test_client: AsyncClient
+    ) -> None:
         payload = {"phone": "01234567890"}
         response = await test_client.patch(
             "/dummy-bank/v1/customers/cc5a6534-c35a-4f41-83bf-f0c69c6ad513",
@@ -40,7 +40,7 @@ class TestUpdateField:
         original: Any,
         updated: Any,
         make_customer: MakeCustomer,
-            test_client: AsyncClient,
+        test_client: AsyncClient,
     ) -> None:
         existing = make_customer(**{field: original})
         await customer_repository.save_customer(existing)

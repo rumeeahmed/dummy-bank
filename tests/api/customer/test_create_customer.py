@@ -1,19 +1,20 @@
-from httpx import AsyncClient
 from typing import Any
 from unittest.mock import Mock, patch
 from uuid import UUID
 
 import pytest
 from freezegun import freeze_time
+from httpx import AsyncClient
 
-from dummy_bank.api.settings import Settings
 from dummy_bank.domain import Customer
 from dummy_bank.repository import CustomerRepository
 
 
 class TestCustomerAlreadyExists:
     @pytest.mark.asyncio
-    async def test(self, customer_repository: CustomerRepository, test_client: AsyncClient) -> None:
+    async def test(
+        self, customer_repository: CustomerRepository, test_client: AsyncClient
+    ) -> None:
         payload = {
             "email": "customer@example.com",
             "first_name": "John",
@@ -43,7 +44,8 @@ class TestCreateCustomer:
     async def test(
         self,
         mock_uuid: Mock,
-        customer_repository: CustomerRepository, test_client: AsyncClient
+        customer_repository: CustomerRepository,
+        test_client: AsyncClient,
     ) -> None:
         expected_id = UUID("9a4bdb0b-43cf-4efc-8a4c-260f8e117d9d")
         mock_uuid.return_value = expected_id
@@ -80,7 +82,11 @@ class TestCreateCustomer:
     )
     @pytest.mark.asyncio
     async def test_bad_payload(
-        self, customer_repository: CustomerRepository, field: str, value: Any , test_client: AsyncClient
+        self,
+        customer_repository: CustomerRepository,
+        field: str,
+        value: Any,
+        test_client: AsyncClient,
     ) -> None:
         payload = {
             "email": "john.smith@example.com",
