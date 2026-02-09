@@ -30,7 +30,7 @@ pytest +args="":
     uv run python -m pytest {{args}}
 
 pytest-parallel workers="auto" +args="":
-    uv run python -m pytest  -n {{workers}} --dist loadscope {{args}}
+    uv run python -m pytest -n {{workers}} --dist worksteal {{args}}
 
 pytest-verbose:
     uv run python -m pytest -vvv
@@ -45,6 +45,7 @@ coverage:
 coverage-parallel workers="auto" +args="":
     uv run python -m pytest \
         -n {{workers}} \
+        --dist worksteal \
         --cov=src/dummy_bank \
         --cov-report=term \
         --cov-report=html \
