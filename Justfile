@@ -30,7 +30,7 @@ pytest +args="":
     uv run python -m pytest {{args}}
 
 pytest-parallel workers="auto" +args="":
-    uv run python -m pytest -n {{workers}} --dist worksteal {{args}}
+    uv run python -m pytest -n {{workers}} --dist worksteal --tb=short --show-capture=log {{args}}
 
 pytest-verbose:
     uv run python -m pytest -vvv
@@ -46,6 +46,8 @@ coverage-parallel workers="auto" +args="":
     uv run python -m pytest \
         -n {{workers}} \
         --dist worksteal \
+        --tb=short \
+        --show-capture=log \
         --cov=src/dummy_bank \
         --cov-report=term \
         --cov-report=html \

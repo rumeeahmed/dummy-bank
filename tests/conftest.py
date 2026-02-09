@@ -80,12 +80,7 @@ async def database_engine(postgresql: Connection) -> AsyncIterator[AsyncEngine]:
         port=postgresql.info.port,
         database=postgresql.info.dbname,
     )
-
-    engine = create_async_engine(
-        url,
-        pool_size=5,
-        max_overflow=10,
-    )
+    engine = create_async_engine(url, pool_size=5, max_overflow=10)
 
     yield engine
 
